@@ -1,7 +1,7 @@
-import 'reflect-metadata';
-import 'dotenv/config';
-import { DataSource } from 'typeorm';
-import { User } from './entity/User';
+import 'reflect-metadata'
+import 'dotenv/config'
+import { DataSource } from 'typeorm'
+import { User } from './entity/User'
 
 export const AppDataSource = new DataSource({
   type: 'mysql',
@@ -15,4 +15,4 @@ export const AppDataSource = new DataSource({
   entities: [User],
   migrations: [],
   subscribers: [],
-});
+})
