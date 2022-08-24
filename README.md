@@ -4,8 +4,9 @@ Steps to run this project:
 
 1. Run `yarn` command
 2. Setup database settings inside `data-source.ts` file
-3. Run dev `yarn run dev` command
-4. Run production `yarn run prod` command
+3. Run dev `yarn dev` command
+4. Run production `yarn prod` command
+
 ### 2. Rule commit
 
 ## Rule Commit Message
