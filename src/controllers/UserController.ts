@@ -28,24 +28,42 @@ class UserController {
             })
 
             //Send the users object
-            res.send(users)
+            res.status(200).json({
+                'data': users
+            })
         } else{
-            res.status(400).send('API version is not in the correct.')
+            res.status(400).json({
+                'message': 'API version does not match.'
+            })
         }
     }
 
     static getOneById = async (req: Request, res: Response) => {
-        //Get the ID from the url
-        const id: number = req.body.id
+        const version = Utils.getApiVersion(req.baseUrl, res)
 
-        //Get the user from database
-        const userRepository = AppDataSource.getRepository(User)
-        try {
-            await userRepository.findOneBy({
-                id: id,
+        if (version === 'v1') {
+            //Get the ID from the url
+            const id = Number(req.params.id)
+
+            //Get the user from database
+            const userRepository = AppDataSource.getRepository(User)
+            try {
+                const user = await userRepository.findOneBy({
+                    id: id,
+                })
+
+                res.status(200).json({
+                    'data': user
+                })
+            } catch (error) {
+                res.status(404).json({
+                    'message': 'User not found'
+                })
+            }
+        } else{
+            res.status(400).json({
+                'message': 'API version does not match.'
             })
-        } catch (error) {
-            res.status(404).send('User not found')
         }
     }
 
