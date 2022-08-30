@@ -1,6 +1,11 @@
 import {Response} from "express";
 
 export default class Utils {
+    /**
+     * get version api
+     * @param baseUrl
+     * @param res
+     */
     static getApiVersion(baseUrl: string, res: Response): string | boolean {
         const splitUrl = baseUrl.split('/')
         const version = splitUrl[2]
@@ -11,5 +16,13 @@ export default class Utils {
         }
 
         return version
+    }
+
+    /**
+     * get version number
+     * @param version
+     */
+    static getVersionNumber(version): number {
+        return version.substring(version.indexOf('v') + 1)
     }
 }
