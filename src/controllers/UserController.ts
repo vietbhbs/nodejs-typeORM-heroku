@@ -3,17 +3,35 @@ import { validate } from 'class-validator'
 
 import { User } from '../entity/User'
 import { AppDataSource } from '../data-source'
+import Utils from '../utils'
 
 class UserController {
     static listAll = async (req: Request, res: Response) => {
-        //Get users from database
-        const userRepository = AppDataSource.getRepository(User)
-        const users = await userRepository.find({
-            select: ['id', 'username', 'role'], //We don't want to send the passwords on response
-        })
+        const version = Utils.getApiVersion(req.baseUrl, res)
 
-        //Send the users object
-        res.send(users)
+        if (version === 'v1') {
+            //Get users from database
+            const userRepository = AppDataSource.getRepository(User);
+            const users = await userRepository.find({
+                select: [
+                    'id',
+                    'department_id',
+                    'parent',
+                    'username',
+                    'fullname',
+                    'email',
+                    'status',
+                    'group_id',
+                    'created_at',
+                    'updated_at'
+                ], //We don't want to send the passwords on response
+            })
+
+            //Send the users object
+            res.send(users)
+        } else{
+            res.status(400).send('API version is not in the correct.')
+        }
     }
 
     static getOneById = async (req: Request, res: Response) => {
@@ -33,11 +51,10 @@ class UserController {
 
     static newUser = async (req: Request, res: Response) => {
         //Get parameters from the body
-        const { username, password, role } = req.body
+        const { username, password } = req.body
         const user = new User()
         user.username = username
         user.password = password
-        user.role = role
 
         //Validate if the parameters are ok
         const errors = await validate(user)
