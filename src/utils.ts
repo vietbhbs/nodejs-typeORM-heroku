@@ -21,8 +21,9 @@ export default class Utils {
     /**
      * get version number
      * @param version
+     * @param prefix
      */
-    static getVersionNumber(version): number {
-        return version.substring(version.indexOf('v') + 1)
+    static getVersionNumber(version, prefix = 'v'): number {
+        return version.substring(version.indexOf(prefix) + 1)
     }
 }
