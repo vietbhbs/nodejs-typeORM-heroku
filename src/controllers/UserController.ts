@@ -1,8 +1,8 @@
-import { Request, Response } from 'express'
-import { validate } from 'class-validator'
+import {Request, Response} from 'express'
+import {validate} from 'class-validator'
 
-import { User } from '../entity/User'
-import { AppDataSource } from '../data-source'
+import {User} from '../entity/User'
+import {AppDataSource} from '../data-source'
 import Utils from '../utils'
 
 class UserController {
@@ -28,30 +28,48 @@ class UserController {
             })
 
             //Send the users object
-            res.send(users)
-        } else{
-            res.status(400).send('API version is not in the correct.')
+            res.status(200).json({
+                'data': users
+            })
+        } else {
+            res.status(400).json({
+                'message': 'API version does not match.'
+            })
         }
     }
 
     static getOneById = async (req: Request, res: Response) => {
-        //Get the ID from the url
-        const id: number = req.body.id
+        const version = Utils.getApiVersion(req.baseUrl, res)
 
-        //Get the user from database
-        const userRepository = AppDataSource.getRepository(User)
-        try {
-            await userRepository.findOneBy({
-                id: id,
+        if (version === 'v1') {
+            //Get the ID from the url
+            const id = Number(req.params.id)
+
+            //Get the user from database
+            const userRepository = AppDataSource.getRepository(User)
+            try {
+                const user = await userRepository.findOneBy({
+                    id: id,
+                })
+
+                res.status(200).json({
+                    'data': user
+                })
+            } catch (error) {
+                res.status(404).json({
+                    'message': 'User not found'
+                })
+            }
+        } else {
+            res.status(400).json({
+                'message': 'API version does not match.'
             })
-        } catch (error) {
-            res.status(404).send('User not found')
         }
     }
 
     static newUser = async (req: Request, res: Response) => {
         //Get parameters from the body
-        const { username, password } = req.body
+        const {username, password} = req.body
         const user = new User()
         user.username = username
         user.password = password
@@ -84,7 +102,7 @@ class UserController {
         const id = req.body.id
 
         //Get values from the body
-        const { username, role } = req.body
+        const {username, role} = req.body
 
         //Try to find user on database
         const userRepository = AppDataSource.getRepository(User)
@@ -120,20 +138,36 @@ class UserController {
     }
 
     static deleteUser = async (req: Request, res: Response) => {
-        //Get the ID from the url
-        const id = req.body.id
+        const version = Utils.getApiVersion(req.baseUrl, res)
 
-        const userRepository = AppDataSource.getRepository(User)
-        try {
-            await userRepository.findOneOrFail(id)
-        } catch (error) {
-            res.status(404).send('User not found')
-            return
+        if (version === 'v1') {
+            //Get the ID from the url
+            const id = Number(req.body.id)
+
+            const userRepository = AppDataSource.getRepository(User)
+            try {
+                await userRepository.findOneOrFail({
+                    where: {
+                        id: id
+                    }
+                });
+            } catch (error) {
+                res.status(404).json({
+                    'message': 'User not found'
+                })
+                return
+            }
+            await userRepository.delete(id)
+
+            //After all send a 204 (no content, but accepted) response
+            res.status(200).json({
+                'message': 'User deleted'
+            })
+        } else {
+            res.status(400).json({
+                'message': 'API version does not match.'
+            })
         }
-        await userRepository.delete(id)
-
-        //After all send a 204 (no content, but accepted) response
-        res.status(204).send()
     }
 }
 

@@ -7,7 +7,7 @@ const router = Router()
 router.get('/', UserController.listAll)
 
 // Get one user
-router.get('/:id([0-9]+)', UserController.getOneById)
+router.get('/show/:id([0-9]+)', UserController.getOneById)
 
 //Create a new user
 router.post('/', UserController.newUser)
@@ -16,6 +16,6 @@ router.post('/', UserController.newUser)
 router.patch('/:id([0-9]+)', UserController.editUser)
 
 //Delete one user
-router.delete('/:id([0-9]+)', UserController.deleteUser)
+router.post('/delete', UserController.deleteUser)
 
 export default router
