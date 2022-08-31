@@ -16,6 +16,6 @@ router.post('/', UserController.newUser)
 router.patch('/:id([0-9]+)', UserController.editUser)
 
 //Delete one user
-router.delete('/:id([0-9]+)', UserController.deleteUser)
+router.post('/delete', UserController.deleteUser)
 
 export default router

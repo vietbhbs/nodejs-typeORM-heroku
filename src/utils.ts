@@ -12,7 +12,7 @@ export default class Utils {
         const regex = /^v\d{1,3}$/g;
 
         if (!regex.test(version)) {
-            res.status(400).send('API version is not in the correct.')
+            res.status(400).json('API version is not in the correct.')
         }
 
         return version
