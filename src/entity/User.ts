@@ -6,18 +6,12 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
 } from 'typeorm'
-import {
-    Length,
-    IsNotEmpty,
-    IsEmail,
-    IsDate,
-    IsIn
-} from 'class-validator'
+import { Length, IsNotEmpty, IsEmail, IsIn } from 'class-validator'
 import * as bcrypt from 'bcryptjs'
 import config from '../config/config'
 
 @Entity(config.userTable)
-@Unique(['username'])
+@Unique(['email'])
 export class User {
     @PrimaryGeneratedColumn()
     id: number
@@ -26,7 +20,7 @@ export class User {
     @IsNotEmpty()
     department_id: number
 
-    @Column({default: 0})
+    @Column({ default: 0 })
     @IsNotEmpty()
     parent: number
 
@@ -55,7 +49,7 @@ export class User {
     @IsIn([0, 1, 2])
     status: number
 
-    @Column({nullable:true})
+    @Column({ nullable: true })
     avatar: string
 
     @Column()
@@ -67,12 +61,10 @@ export class User {
     @Length(6, 255)
     password: string
 
-    @Column({nullable: true, default: 0})
+    @Column({ nullable: true, default: 0 })
     reset_password: number
 
     @Column()
-    @IsNotEmpty()
-    @IsDate()
     updated_pass: Date
 
     @Column()
@@ -80,36 +72,32 @@ export class User {
     @Length(10, 16)
     phone: string
 
-    @Column({nullable: true})
+    @Column({ nullable: true })
     note: string
 
-    @Column({nullable: true})
+    @Column({ nullable: true })
     photo: string
 
-    @Column({nullable: true})
+    @Column({ nullable: true })
     thumb: string
 
-    @Column({nullable: true})
+    @Column({ nullable: true })
     remember_token: string
 
     @Column()
     @IsNotEmpty()
     salt: string
 
-    @Column()
-    @IsNotEmpty()
+    @Column({ default: '' })
     token: string
 
-    @Column()
-    @IsNotEmpty()
+    @Column({ default: '' })
     google_token: string
 
-    @Column()
-    @IsNotEmpty()
+    @Column({ default: '' })
     google_refresh_token: string
 
-    @Column()
-    @IsNotEmpty()
+    @Column({ default: '' })
     activation_key: string
 
     @CreateDateColumn()
@@ -118,8 +106,10 @@ export class User {
     @UpdateDateColumn()
     updated_at: Date
 
-    hashPassword() {
-        this.password = bcrypt.hashSync(this.password, 8)
+    hashPassword(rounds = 10) {
+        const salt = bcrypt.genSaltSync(rounds)
+        this.salt = salt
+        this.password = bcrypt.hashSync(this.password, salt)
     }
 
     checkIfUnencryptedPasswordIsValid(unencryptedPassword: string) {
