@@ -1,4 +1,4 @@
-import {Response} from "express";
+import { Response } from 'express'
 
 export default class Utils {
     /**
@@ -9,7 +9,7 @@ export default class Utils {
     static getApiVersion(baseUrl: string, res: Response): string | boolean {
         const splitUrl = baseUrl.split('/')
         const version = splitUrl[2]
-        const regex = /^v\d{1,3}$/g;
+        const regex = /^v\d{1,3}$/g
 
         if (!regex.test(version)) {
             res.status(400).json('API version is not in the correct.')

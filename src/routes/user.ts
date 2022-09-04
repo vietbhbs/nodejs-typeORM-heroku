@@ -13,7 +13,7 @@ router.get('/show/:id([0-9]+)', UserController.getOneById)
 router.post('/', UserController.newUser)
 
 //Edit one user
-router.patch('/:id([0-9]+)', UserController.editUser)
+router.post('/update', UserController.editUser)
 
 //Delete one user
 router.post('/delete', UserController.deleteUser)
