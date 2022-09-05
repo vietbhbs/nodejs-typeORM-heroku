@@ -3,7 +3,7 @@
       "yarn lint",
       "git add ."
     ],
-    "*.+(json|css|md)": [
+    "*.+(json|css|md|ts)": [
       "yarn format",
       "git add ."
     ]

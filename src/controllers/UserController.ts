@@ -3,120 +3,288 @@ import { validate } from 'class-validator'
 
 import { User } from '../entity/User'
 import { AppDataSource } from '../data-source'
+import Utils from '../utils'
+import config from '../config/config'
 
 class UserController {
+    // get list users
     static listAll = async (req: Request, res: Response) => {
-        //Get users from database
-        const userRepository = AppDataSource.getRepository(User)
-        const users = await userRepository.find({
-            select: ['id', 'username', 'role'], //We don't want to send the passwords on response
-        })
+        const version = Utils.getApiVersion(req.baseUrl, res)
 
-        //Send the users object
-        res.send(users)
+        if (version === 'v1') {
+            // connect database
+            if (!AppDataSource.isInitialized) {
+                await AppDataSource.initialize()
+            }
+            //Get users from database
+            const userRepository = AppDataSource.getRepository(User)
+
+            let users
+
+            const select = [
+                'users.id',
+                'users.department_id',
+                'users.parent',
+                'users.username',
+                'users.fullname',
+                'users.email',
+                'users.status',
+                'users.group_id',
+                'users.created_at',
+                'users.updated_at',
+            ]
+
+            // pagination or get all
+            if (req.query.page) {
+                const currentPage = Number(req.query.page)
+                const pageItem = config.pageItem
+
+                users = await userRepository
+                    .createQueryBuilder('users')
+                    .select(select)
+                    .skip((currentPage - 1) * pageItem)
+                    .take(pageItem)
+                    .getMany()
+            } else {
+                users = await userRepository
+                    .createQueryBuilder('users')
+                    .select(select)
+                    .getMany()
+            }
+
+            // disconnect database
+            await AppDataSource.destroy()
+
+            //Send the users object
+            res.status(200).json({
+                data: users,
+            })
+        } else {
+            res.status(400).json({
+                message: 'API version does not match.',
+            })
+        }
     }
 
+    // show user detail
     static getOneById = async (req: Request, res: Response) => {
-        //Get the ID from the url
-        const id: number = req.body.id
+        const version = Utils.getApiVersion(req.baseUrl, res)
 
-        //Get the user from database
-        const userRepository = AppDataSource.getRepository(User)
-        try {
-            await userRepository.findOneBy({
-                id: id,
+        if (version === 'v1') {
+            //Get the ID from the url
+            const id = Number(req.params.id)
+
+            // connect database
+            if (!AppDataSource.isInitialized) {
+                await AppDataSource.initialize()
+            }
+
+            //Get the user from database
+            const userRepository = AppDataSource.getRepository(User)
+            try {
+                const user = await userRepository.findOneBy({
+                    id: id,
+                })
+
+                // disconnect database
+                await AppDataSource.destroy()
+
+                res.status(200).json({
+                    data: user,
+                })
+            } catch (error) {
+                res.status(404).json({
+                    message: 'User not found',
+                })
+            }
+        } else {
+            res.status(400).json({
+                message: 'API version does not match.',
             })
-        } catch (error) {
-            res.status(404).send('User not found')
         }
     }
 
+    // store new user
     static newUser = async (req: Request, res: Response) => {
-        //Get parameters from the body
-        const { username, password, role } = req.body
-        const user = new User()
-        user.username = username
-        user.password = password
-        user.role = role
+        const version = Utils.getApiVersion(req.baseUrl, res)
 
-        //Validate if the parameters are ok
-        const errors = await validate(user)
-        if (errors.length > 0) {
-            res.status(400).send(errors)
-            return
+        if (version === 'v1') {
+            //Get parameters from the body
+            const user = new User()
+            for (const key in req.body) {
+                user[key] = req.body[key]
+            }
+
+            user['updated_pass'] = new Date()
+
+            //Hash the password, to securely store on DB
+            user.hashPassword()
+
+            //Validate if the parameters are ok
+            const errors = await validate(user)
+            if (errors.length > 0) {
+                res.status(400).send(errors)
+                return
+            }
+
+            // connect database
+            if (!AppDataSource.isInitialized) {
+                await AppDataSource.initialize()
+            }
+
+            //Try to save. If fails, the username is already in use
+            const userRepository = AppDataSource.getRepository(User)
+            try {
+                await userRepository.save(user)
+
+                // disconnect database
+                await AppDataSource.destroy()
+            } catch (e) {
+                res.status(409).send('username already in use')
+                return
+            }
+
+            //If all ok, send 201 response
+            res.status(201).send('User created')
+        } else {
+            res.status(400).json({
+                message: 'API version does not match.',
+            })
         }
-
-        //Hash the password, to securely store on DB
-        user.hashPassword()
-
-        //Try to save. If fails, the username is already in use
-        const userRepository = AppDataSource.getRepository(User)
-        try {
-            await userRepository.save(user)
-        } catch (e) {
-            res.status(409).send('username already in use')
-            return
-        }
-
-        //If all ok, send 201 response
-        res.status(201).send('User created')
     }
 
+    // update user
     static editUser = async (req: Request, res: Response) => {
-        //Get the ID from the url
-        const id = req.body.id
+        const version = Utils.getApiVersion(req.baseUrl, res)
 
-        //Get values from the body
-        const { username, role } = req.body
+        if (version === 'v1') {
+            //Get the ID from body
+            const id = Number(req.body.id)
 
-        //Try to find user on database
-        const userRepository = AppDataSource.getRepository(User)
-        let user
-        try {
-            user = await userRepository.findOneBy({
+            // connect database
+            if (!AppDataSource.isInitialized) {
+                await AppDataSource.initialize()
+            }
+
+            //Try to find user on database
+            const userRepository = AppDataSource.getRepository(User)
+            const user = await userRepository.findOneBy({
                 id: id,
             })
-        } catch (error) {
-            //If not found, send a 404 response
-            res.status(404).send('User not found')
-            return
-        }
 
-        //Validate the new values on model
-        user.username = username
-        user.role = role
-        const errors = await validate(user)
-        if (errors.length > 0) {
-            res.status(400).send(errors)
-            return
-        }
+            // disconnect database
+            await AppDataSource.destroy()
 
-        //Try to safe, if fails, that means username already in use
-        try {
-            await userRepository.save(user)
-        } catch (e) {
-            res.status(409).send('username already in use')
-            return
+            if (!user) {
+                res.status(404).json({
+                    message: 'User not found',
+                })
+                return
+            }
+
+            //Get values from the body
+            for (const key in req.body) {
+                if (key === 'password') {
+                    user['updated_pass'] = new Date()
+                    user.hashPassword()
+                } else {
+                    user[key] = req.body[key]
+                }
+            }
+
+            //Validate the new values on model
+            const errors = await validate(user)
+            if (errors.length > 0) {
+                res.status(400).send(errors)
+                return
+            }
+
+            //Try to safe, if fails, that means username already in use
+            try {
+                // connect database
+                if (!AppDataSource.isInitialized) {
+                    await AppDataSource.initialize()
+                }
+
+                await userRepository.save(user)
+
+                // disconnect database
+                await AppDataSource.destroy()
+            } catch (e) {
+                res.status(409).send('username already in use')
+                return
+            }
+
+            //Update user successful
+            res.status(200).json({
+                message: 'user updated',
+            })
+        } else {
+            res.status(400).json({
+                message: 'API version does not match.',
+            })
         }
-        //After all send a 204 (no content, but accepted) response
-        res.status(204).send()
     }
 
+    // delete user
     static deleteUser = async (req: Request, res: Response) => {
-        //Get the ID from the url
-        const id = req.body.id
+        const version = Utils.getApiVersion(req.baseUrl, res)
 
-        const userRepository = AppDataSource.getRepository(User)
-        try {
-            await userRepository.findOneOrFail(id)
-        } catch (error) {
-            res.status(404).send('User not found')
-            return
+        if (version === 'v1') {
+            //Get the ID from the url
+            const id = Number(req.body.id)
+
+            // connect database
+            if (!AppDataSource.isInitialized) {
+                await AppDataSource.initialize()
+            }
+
+            const userRepository = AppDataSource.getRepository(User)
+
+            let user
+            try {
+                user = await userRepository.findOneOrFail({
+                    where: {
+                        id: id,
+                    },
+                })
+
+                // disconnect database
+                await AppDataSource.destroy()
+            } catch (error) {
+                res.status(404).json({
+                    message: 'User not found',
+                })
+                return
+            }
+
+            // remove user
+            try {
+                // connect database
+                if (!AppDataSource.isInitialized) {
+                    await AppDataSource.initialize()
+                }
+
+                await userRepository.remove(user)
+
+                // disconnect database
+                await AppDataSource.destroy()
+            } catch (e) {
+                res.status(409).json({
+                    message: 'User removed failed.',
+                })
+                return
+            }
+
+            //After all send a 204 (no content, but accepted) response
+            res.status(200).json({
+                message: 'User deleted',
+            })
+        } else {
+            res.status(400).json({
+                message: 'API version does not match.',
+            })
         }
-        await userRepository.delete(id)
-
-        //After all send a 204 (no content, but accepted) response
-        res.status(204).send()
     }
 }
 
