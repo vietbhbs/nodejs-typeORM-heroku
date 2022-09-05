@@ -2,7 +2,7 @@ import 'reflect-metadata'
 import 'dotenv/config'
 import { DataSource } from 'typeorm'
 import { User } from './entity/User'
-import {Category} from "./entity/Category";
+import { Category } from './entity/Category'
 
 export const AppDataSource = new DataSource({
     type: 'mysql',

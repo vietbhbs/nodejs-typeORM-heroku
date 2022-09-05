@@ -3,17 +3,12 @@ import {
     PrimaryGeneratedColumn,
     Column,
     CreateDateColumn,
-    UpdateDateColumn
+    UpdateDateColumn,
 } from 'typeorm'
 
-import {
-    IsIn,
-    Length,
-    Min,
-    IsNotEmpty
-} from 'class-validator'
+import { IsIn, Length, Min, IsNotEmpty } from 'class-validator'
 
-@Entity("tnv_category")
+@Entity('tnv_category')
 export class Category {
     @PrimaryGeneratedColumn()
     id: number
@@ -27,26 +22,24 @@ export class Category {
     @IsIn([0, 1])
     status: number
 
-    @Column({unique: true})
+    @Column({ unique: true })
     @IsNotEmpty()
     @Length(5, 100)
     name: string
 
-    @Column(
-        {
-            nullable: true,
-            default: 'vietnamese',
-            length:50
-        }
-    )
+    @Column({
+        nullable: true,
+        default: 'vietnamese',
+        length: 50,
+    })
     language: string
 
-    @Column({unique: true})
+    @Column({ unique: true })
     @IsNotEmpty()
     @Length(1, 50)
     slugs: string
 
-    @Column({unique: true})
+    @Column({ unique: true })
     @IsNotEmpty()
     @Length(5, 256)
     title: string
@@ -61,7 +54,7 @@ export class Category {
     @Length(5, 256)
     keywords: string
 
-    @Column({nullable: true, default: '/'})
+    @Column({ nullable: true, default: '/' })
     photo: string
 
     @Column()
@@ -69,38 +62,38 @@ export class Category {
     @Min(0)
     parent: number
 
-    @Column({name: 'order_stt'})
+    @Column({ name: 'order_stt' })
     @IsNotEmpty()
     @Min(0)
     orderStt: number
 
-    @Column({name: 'show_top'})
+    @Column({ name: 'show_top' })
     @IsNotEmpty()
     @IsIn([0, 1])
     showTop: boolean
 
-    @Column({name: 'show_home'})
+    @Column({ name: 'show_home' })
     @IsNotEmpty()
     @IsIn([0, 1])
     showHome: boolean
 
-    @Column({name: 'show_right'})
+    @Column({ name: 'show_right' })
     @IsNotEmpty()
     @IsIn([0, 1])
     showRight: boolean
 
-    @Column({name: 'show_bottom'})
+    @Column({ name: 'show_bottom' })
     @IsNotEmpty()
     @IsIn([0, 1])
     showBottom: boolean
 
-    @CreateDateColumn({name: 'created_at'})
+    @CreateDateColumn({ name: 'created_at' })
     createdAt: Date
 
-    @UpdateDateColumn({name: 'updated_at'})
+    @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date
 
-    @Column({nullable: true})
+    @Column({ nullable: true })
     @IsIn([0, 1])
     level: boolean
 }

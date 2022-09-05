@@ -1,153 +1,282 @@
-import {Request, Response} from 'express'
-import {Category} from '../entity/Category'
-import {AppDataSource} from '../data-source'
-import {validate} from 'class-validator'
-import {v4 as uuidv4} from 'uuid'
+import { Request, Response } from 'express'
+import { Category } from '../entity/Category'
+import { AppDataSource } from '../data-source'
+import { validate } from 'class-validator'
+import { v4 as uuidv4 } from 'uuid'
+import Utils from '../utils'
+import config from '../config/config'
 
 class CategoryController {
     static listAll = async (req: Request, res: Response) => {
-        //Get categories from database
-        const categoryRepository = AppDataSource.getRepository(Category)
-        let categories
-        // pagination or get all
-        if (req.query.page) {
-            const currentPage = Number(req.query.page)
-            const pageItem = 2
+        const version = Utils.getApiVersion(req.baseUrl, res)
 
-            categories = await categoryRepository.createQueryBuilder('category')
-                .skip((currentPage - 1) * pageItem)
-                .take(pageItem)
-                .getMany()
+        if (version === 'v1') {
+            // connect database
+            if (!AppDataSource.isInitialized) {
+                await AppDataSource.initialize()
+            }
+
+            //Get categories from database
+            const categoryRepository = AppDataSource.getRepository(Category)
+            let categories
+
+            const select = [
+                'categories.id',
+                'categories.name',
+                'categories.language',
+                'categories.slugs',
+                'categories.title',
+                'categories.description',
+                'categories.keywords',
+                'categories.photo',
+                'categories.level',
+                'categories.status',
+                'categories.created_at',
+                'categories.updated_at',
+            ]
+
+            // pagination or get all
+            if (req.query.page) {
+                const currentPage = Number(req.query.page)
+                const pageItem = config.pageItem
+
+                categories = await categoryRepository
+                    .createQueryBuilder('categories')
+                    .select(select)
+                    .skip((currentPage - 1) * pageItem)
+                    .take(pageItem)
+                    .getMany()
+            } else {
+                categories = await categoryRepository
+                    .createQueryBuilder('categories')
+                    .select(select)
+                    .getMany()
+            }
+
+            // disconnect database
+            await AppDataSource.destroy()
+
+            //Send the categories object
+            res.status(200).json({
+                data: categories,
+            })
         } else {
-            categories = await categoryRepository.find()
+            res.status(400).json({
+                message: 'API version does not match.',
+            })
         }
-
-        //Send the categories object
-        res.status(200).json({
-            'data': categories
-        })
     }
 
     static getOneById = async (req: Request, res: Response) => {
-        //Get the ID from the url
-        const id = Number(req.params.id)
+        const version = Utils.getApiVersion(req.baseUrl, res)
 
-        //Get the category from database
-        const categoryRepository = AppDataSource.getRepository(Category)
-        try {
-            const categories = await categoryRepository.findOneBy({
-                id: id,
-            })
+        if (version === 'v1') {
+            //Get the ID from the url
+            const id = Number(req.params.id)
 
-            res.status(200).json({
-                'data': categories
-            })
-        } catch (error) {
-            res.status(404).json({
-                'message': 'Category not found'
-            })
+            // connect database
+            if (!AppDataSource.isInitialized) {
+                await AppDataSource.initialize()
+            }
+
+            //Get the category from database
+            const categoryRepository = AppDataSource.getRepository(Category)
+            try {
+                const categories = await categoryRepository.findOneBy({
+                    id: id,
+                })
+
+                // disconnect database
+                await AppDataSource.destroy()
+
+                res.status(200).json({
+                    data: categories,
+                })
+            } catch (error) {
+                res.status(404).json({
+                    message: 'Category not found',
+                })
+            }
+        } else {
         }
     }
 
     static newCategory = async (req: Request, res: Response) => {
-        const category = new Category()
-        //Get parameters from the body
-        for (const categoryKey in req.body) {
-            category[categoryKey] = req.body[categoryKey]
-        }
+        const version = Utils.getApiVersion(req.baseUrl, res)
 
-        category.uuid = uuidv4()
-        //Validate if the parameters are ok
-        const errors = await validate(category, {validationError: {target: false}})
-        if (errors.length > 0) {
-            res.status(400).send(errors)
-            return
-        }
+        if (version === 'v1') {
+            const category = new Category()
+            //Get parameters from the body
+            for (const categoryKey in req.body) {
+                category[categoryKey] = req.body[categoryKey]
+            }
 
-        //Try to save. If fails, the category is already in use
-        const categoryRepository = AppDataSource.getRepository(Category)
-        try {
-            await categoryRepository.save(category)
-        } catch (e) {
-            res.status(409).json({
-                'message': 'category already in use'
+            category.uuid = uuidv4()
+            //Validate if the parameters are ok
+            const errors = await validate(category, {
+                validationError: { target: false },
             })
-            return
-        }
+            if (errors.length > 0) {
+                res.status(400).send(errors)
+                return
+            }
 
-        //If all ok, send 201 response
-        res.status(201).json({
-            'message': 'Category created'
-        })
+            // connect database
+            if (!AppDataSource.isInitialized) {
+                await AppDataSource.initialize()
+            }
+
+            //Try to save. If fails, the category is already in use
+            const categoryRepository = AppDataSource.getRepository(Category)
+            try {
+                await categoryRepository.save(category)
+
+                // disconnect database
+                await AppDataSource.destroy()
+            } catch (e) {
+                res.status(409).json({
+                    message: 'category already in use',
+                })
+                return
+            }
+
+            //If all ok, send 201 response
+            res.status(201).json({
+                message: 'Category created',
+            })
+        } else {
+            res.status(400).json({
+                message: 'API version does not match.',
+            })
+        }
     }
 
     static editCategory = async (req: Request, res: Response) => {
-        //Get the ID from the url
-        const id = Number(req.params.id)
+        const version = Utils.getApiVersion(req.baseUrl, res)
 
-        //Try to find category on database
-        const categoryRepository = AppDataSource.getRepository(Category)
-        const category = await categoryRepository.findOneBy({
-            id: id,
-        })
+        if (version === 'v1') {
+            //Get the ID from the url
+            const id = Number(req.params.id)
 
-        if (!category) {
-            res.status(404).json({
-                'message': 'Category not found'
+            // connect database
+            if (!AppDataSource.isInitialized) {
+                await AppDataSource.initialize()
+            }
+
+            //Try to find category on database
+            const categoryRepository = AppDataSource.getRepository(Category)
+            const category = await categoryRepository.findOneBy({
+                id: id,
             })
-            return
-        }
 
-        //Get values from the body
-        for (const categoryKey in req.body) {
-            category[categoryKey] = req.body[categoryKey]
-        }
+            // disconnect database
+            await AppDataSource.destroy()
 
-        //Validate the new values on model
-        const errors = await validate(Category)
-        if (errors.length > 0) {
-            res.status(400).send(errors)
-            return
-        }
+            if (!category) {
+                res.status(404).json({
+                    message: 'Category not found',
+                })
+                return
+            }
 
-        //Try to safe, if fails, that means category already in use
-        try {
-            await categoryRepository.save(category)
-        } catch (e) {
-            res.status(409).json({
-                'message': 'category already in use'
+            //Get values from the body
+            for (const categoryKey in req.body) {
+                category[categoryKey] = req.body[categoryKey]
+            }
+
+            //Validate the new values on model
+            const errors = await validate(Category)
+            if (errors.length > 0) {
+                res.status(400).send(errors)
+                return
+            }
+
+            //Try to safe, if fails, that means category already in use
+            try {
+                // connect database
+                if (!AppDataSource.isInitialized) {
+                    await AppDataSource.initialize()
+                }
+
+                await categoryRepository.save(category)
+
+                // disconnect database
+                await AppDataSource.destroy()
+            } catch (e) {
+                res.status(409).json({
+                    message: 'category already in use',
+                })
+                return
+            }
+
+            res.status(200).json({
+                message: 'category updated',
             })
-            return
+        } else {
+            res.status(400).json({
+                message: 'API version does not match.',
+            })
         }
-
-        res.status(200).json({
-            'message': 'category updated'
-        })
     }
 
     static deleteCategory = async (req: Request, res: Response) => {
-        //Get the ID from the url
-        const id = Number(req.params.id)
-        const categoryRepository = AppDataSource.getRepository(Category)
+        const version = Utils.getApiVersion(req.baseUrl, res)
 
-        try {
-            await categoryRepository.findOneOrFail({
-                where: {
-                    id: id
+        if (version === 'v1') {
+            //Get the ID from the url
+            const id = Number(req.params.id)
+
+            // connect database
+            if (!AppDataSource.isInitialized) {
+                await AppDataSource.initialize()
+            }
+
+            const categoryRepository = AppDataSource.getRepository(Category)
+
+            let category
+            try {
+                category = await categoryRepository.findOneOrFail({
+                    where: {
+                        id: id,
+                    },
+                })
+
+                // disconnect database
+                await AppDataSource.destroy()
+            } catch (error) {
+                res.status(404).json({
+                    message: 'Category not found',
+                })
+                return
+            }
+
+            // remove category
+            try {
+                // connect database
+                if (!AppDataSource.isInitialized) {
+                    await AppDataSource.initialize()
                 }
-            })
-        } catch (error) {
-            res.status(404).json({
-                'message': 'Category not found'
-            })
-            return
-        }
-        await categoryRepository.delete(id)
 
-        //After all send a 204 (no content, but accepted) response
-        res.status(200).json({
-            'message': 'category deleted'
-        })
+                await categoryRepository.remove(category)
+
+                // disconnect database
+                await AppDataSource.destroy()
+            } catch (e) {
+                res.status(409).json({
+                    message: 'User removed failed.',
+                })
+                return
+            }
+
+            //After all send a 204 (no content, but accepted) response
+            res.status(200).json({
+                message: 'category deleted',
+            })
+        } else {
+            res.status(400).json({
+                message: 'API version does not match.',
+            })
+        }
     }
 }
 
