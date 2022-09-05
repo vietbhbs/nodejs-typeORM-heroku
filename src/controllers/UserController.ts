@@ -21,39 +21,45 @@ class UserController {
 
             let users
 
-            const select = [
-                'users.id',
-                'users.department_id',
-                'users.parent',
-                'users.username',
-                'users.fullname',
-                'users.email',
-                'users.status',
-                'users.group_id',
-                'users.created_at',
-                'users.updated_at',
-            ]
+            try {
+                const select = [
+                    'users.id',
+                    'users.department_id',
+                    'users.parent',
+                    'users.username',
+                    'users.fullname',
+                    'users.email',
+                    'users.status',
+                    'users.group_id',
+                    'users.created_at',
+                    'users.updated_at',
+                ]
 
-            // pagination or get all
-            if (req.query.page) {
-                const currentPage = Number(req.query.page)
-                const pageItem = config.pageItem
+                // pagination or get all
+                if (req.query.page) {
+                    const currentPage = Number(req.query.page)
+                    const pageItem = config.pageItem
 
-                users = await userRepository
-                    .createQueryBuilder('users')
-                    .select(select)
-                    .skip((currentPage - 1) * pageItem)
-                    .take(pageItem)
-                    .getMany()
-            } else {
-                users = await userRepository
-                    .createQueryBuilder('users')
-                    .select(select)
-                    .getMany()
+                    users = await userRepository
+                        .createQueryBuilder('users')
+                        .select(select)
+                        .skip((currentPage - 1) * pageItem)
+                        .take(pageItem)
+                        .getMany()
+                } else {
+                    users = await userRepository
+                        .createQueryBuilder('users')
+                        .select(select)
+                        .getMany()
+                }
+            } catch (error) {
+                res.status(404).json({
+                    message: 'Cannot get list users',
+                })
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
             }
-
-            // disconnect database
-            await AppDataSource.destroy()
 
             //Send the users object
             res.status(200).json({
@@ -86,9 +92,6 @@ class UserController {
                     id: id,
                 })
 
-                // disconnect database
-                await AppDataSource.destroy()
-
                 res.status(200).json({
                     data: user,
                 })
@@ -96,6 +99,9 @@ class UserController {
                 res.status(404).json({
                     message: 'User not found',
                 })
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
             }
         } else {
             res.status(400).json({
@@ -136,12 +142,12 @@ class UserController {
             const userRepository = AppDataSource.getRepository(User)
             try {
                 await userRepository.save(user)
-
-                // disconnect database
-                await AppDataSource.destroy()
             } catch (e) {
                 res.status(409).send('username already in use')
                 return
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
             }
 
             //If all ok, send 201 response
@@ -172,14 +178,14 @@ class UserController {
                 id: id,
             })
 
-            // disconnect database
-            await AppDataSource.destroy()
-
             if (!user) {
                 res.status(404).json({
                     message: 'User not found',
                 })
                 return
+            } else {
+                // disconnect database
+                await AppDataSource.destroy()
             }
 
             //Get values from the body
@@ -207,12 +213,12 @@ class UserController {
                 }
 
                 await userRepository.save(user)
-
-                // disconnect database
-                await AppDataSource.destroy()
             } catch (e) {
                 res.status(409).send('username already in use')
                 return
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
             }
 
             //Update user successful
@@ -248,14 +254,14 @@ class UserController {
                         id: id,
                     },
                 })
-
-                // disconnect database
-                await AppDataSource.destroy()
             } catch (error) {
                 res.status(404).json({
                     message: 'User not found',
                 })
                 return
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
             }
 
             // remove user
@@ -266,14 +272,14 @@ class UserController {
                 }
 
                 await userRepository.remove(user)
-
-                // disconnect database
-                await AppDataSource.destroy()
             } catch (e) {
                 res.status(409).json({
                     message: 'User removed failed.',
                 })
                 return
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
             }
 
             //After all send a 204 (no content, but accepted) response
