@@ -5,10 +5,11 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
 } from 'typeorm'
+import config from '../config/config'
 
 import { IsIn, Length, Min, IsNotEmpty } from 'class-validator'
 
-@Entity('tnv_category')
+@Entity(config.categoryTable)
 export class Category {
     @PrimaryGeneratedColumn()
     id: number
@@ -22,7 +23,7 @@ export class Category {
     @IsIn([0, 1])
     status: number
 
-    @Column({ unique: true })
+    @Column()
     @IsNotEmpty()
     @Length(5, 100)
     name: string
