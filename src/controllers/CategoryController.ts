@@ -7,6 +7,7 @@ import Utils from '../utils'
 import config from '../config/config'
 
 class CategoryController {
+    // get list categories
     static listAll = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
 
@@ -20,41 +21,47 @@ class CategoryController {
             const categoryRepository = AppDataSource.getRepository(Category)
             let categories
 
-            const select = [
-                'categories.id',
-                'categories.name',
-                'categories.language',
-                'categories.slugs',
-                'categories.title',
-                'categories.description',
-                'categories.keywords',
-                'categories.photo',
-                'categories.level',
-                'categories.status',
-                'categories.created_at',
-                'categories.updated_at',
-            ]
+            try {
+                const select = [
+                    'categories.id',
+                    'categories.name',
+                    'categories.language',
+                    'categories.slugs',
+                    'categories.title',
+                    'categories.description',
+                    'categories.keywords',
+                    'categories.photo',
+                    'categories.level',
+                    'categories.status',
+                    'categories.created_at',
+                    'categories.updated_at',
+                ]
 
-            // pagination or get all
-            if (req.query.page) {
-                const currentPage = Number(req.query.page)
-                const pageItem = config.pageItem
+                // pagination or get all
+                if (req.query.page) {
+                    const currentPage = Number(req.query.page)
+                    const pageItem = config.pageItem
 
-                categories = await categoryRepository
-                    .createQueryBuilder('categories')
-                    .select(select)
-                    .skip((currentPage - 1) * pageItem)
-                    .take(pageItem)
-                    .getMany()
-            } else {
-                categories = await categoryRepository
-                    .createQueryBuilder('categories')
-                    .select(select)
-                    .getMany()
+                    categories = await categoryRepository
+                        .createQueryBuilder('categories')
+                        .select(select)
+                        .skip((currentPage - 1) * pageItem)
+                        .take(pageItem)
+                        .getMany()
+                } else {
+                    categories = await categoryRepository
+                        .createQueryBuilder('categories')
+                        .select(select)
+                        .getMany()
+                }
+            } catch (e) {
+                res.status(404).json({
+                    message: 'Cannot get list categories',
+                })
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
             }
-
-            // disconnect database
-            await AppDataSource.destroy()
 
             //Send the categories object
             res.status(200).json({
@@ -67,6 +74,7 @@ class CategoryController {
         }
     }
 
+    // show category detail
     static getOneById = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
 
@@ -86,18 +94,21 @@ class CategoryController {
                     id: id,
                 })
 
-                // disconnect database
-                await AppDataSource.destroy()
-
                 res.status(200).json({
                     data: categories,
                 })
-            } catch (error) {
+            } catch (e) {
                 res.status(404).json({
                     message: 'Category not found',
                 })
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
             }
         } else {
+            res.status(400).json({
+                message: 'API version does not match.',
+            })
         }
     }
 
@@ -130,14 +141,14 @@ class CategoryController {
             const categoryRepository = AppDataSource.getRepository(Category)
             try {
                 await categoryRepository.save(category)
-
-                // disconnect database
-                await AppDataSource.destroy()
             } catch (e) {
                 res.status(409).json({
                     message: 'category already in use',
                 })
                 return
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
             }
 
             //If all ok, send 201 response
@@ -169,15 +180,15 @@ class CategoryController {
                 id: id,
             })
 
-            // disconnect database
-            await AppDataSource.destroy()
-
             if (!category) {
                 res.status(404).json({
                     message: 'Category not found',
                 })
                 return
             }
+
+            // disconnect database
+            await AppDataSource.destroy()
 
             //Get values from the body
             for (const categoryKey in req.body) {
@@ -207,6 +218,9 @@ class CategoryController {
                     message: 'category already in use',
                 })
                 return
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
             }
 
             res.status(200).json({
@@ -243,11 +257,14 @@ class CategoryController {
 
                 // disconnect database
                 await AppDataSource.destroy()
-            } catch (error) {
+            } catch (e) {
                 res.status(404).json({
                     message: 'Category not found',
                 })
                 return
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
             }
 
             // remove category
@@ -266,6 +283,9 @@ class CategoryController {
                     message: 'User removed failed.',
                 })
                 return
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
             }
 
             //After all send a 204 (no content, but accepted) response
