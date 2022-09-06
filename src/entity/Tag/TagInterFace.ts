@@ -1,10 +1,5 @@
-import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    Unique,
-} from 'typeorm'
-import {Length, IsNotEmpty,IsIn} from 'class-validator'
+import { Entity, PrimaryGeneratedColumn, Column, Unique } from 'typeorm'
+import { Length, IsNotEmpty, IsIn } from 'class-validator'
 
 @Entity('tnv_tag')
 @Unique([
@@ -23,7 +18,7 @@ import {Length, IsNotEmpty,IsIn} from 'class-validator'
     'view_day',
     'view_week',
     'view_month',
-    'view_year'
+    'view_year',
 ])
 export class TagInterFace {
     @PrimaryGeneratedColumn()
@@ -34,7 +29,7 @@ export class TagInterFace {
     @Length(4, 50)
     uuid: string
 
-    @Column(['varchar', { length: 50 },{ default: 1 }])
+    @Column(['varchar', { length: 50 }, { default: 1 }])
     @IsNotEmpty()
     @IsIn([0, 1, 2])
     @Length(1, 4)
@@ -54,42 +49,41 @@ export class TagInterFace {
     @Length(4, 50)
     slugs: string
 
-    @Column(['varchar', { length: 50 },{ default: "vietnamese" }])
+    @Column(['varchar', { length: 50 }, { default: 'vietnamese' }])
     @IsNotEmpty()
     @Length(4, 50)
     language: string
 
-    @Column(['varchar', { length: 100 },{ nullable: true }])
+    @Column(['varchar', { length: 100 }, { nullable: true }])
     @IsNotEmpty()
     @Length(4, 50)
     title: string
 
-    @Column(['varchar', { length: 255 },{ nullable: true }])
+    @Column(['varchar', { length: 255 }, { nullable: true }])
     @Length(4, 50)
     description: string
 
-
-    @Column(['varchar', { length: 50 },{ nullable: true }])
+    @Column(['varchar', { length: 50 }, { nullable: true }])
     @IsNotEmpty()
     @Length(4, 50)
     keywords: string
 
-    @Column(['varchar', { length: 100 },{ nullable: true }])
+    @Column(['varchar', { length: 100 }, { nullable: true }])
     @IsNotEmpty()
     @Length(4, 50)
     photo: string
 
-    @Column(['varchar', { length: 50 },{ nullable: true }])
+    @Column(['varchar', { length: 50 }, { nullable: true }])
     @IsNotEmpty()
     @Length(4, 50)
     viewed: string
 
-    @Column(['varchar', { length: 50 },{ nullable: true }])
+    @Column(['varchar', { length: 50 }, { nullable: true }])
     @IsNotEmpty()
     @Length(4, 50)
     view_total: string
 
-    @Column(['varchar', { length: 50 },{ nullable: true }])
+    @Column(['varchar', { length: 50 }, { nullable: true }])
     @Length(4, 50)
     view_day: string
 
@@ -106,9 +100,7 @@ export class TagInterFace {
     @IsNotEmpty()
     created_at: Date
 
-
     @Column()
     @IsNotEmpty()
     updated_at: Date
-
 }

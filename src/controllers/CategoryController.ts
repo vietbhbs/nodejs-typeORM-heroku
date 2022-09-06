@@ -1,13 +1,13 @@
 import { Request, Response } from 'express'
-import { validate } from 'class-validator'
-
-import { User } from '../entity/User'
+import { Category } from '../entity/Category'
 import { AppDataSource } from '../data-source'
+import { validate } from 'class-validator'
+import { v4 as uuidv4 } from 'uuid'
 import Utils from '../utils'
 import config from '../config/config'
 
-class UserController {
-    // get list users
+class CategoryController {
+    // get list categories
     static listAll = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
 
@@ -16,23 +16,25 @@ class UserController {
             if (!AppDataSource.isInitialized) {
                 await AppDataSource.initialize()
             }
-            //Get users from database
-            const userRepository = AppDataSource.getRepository(User)
 
-            let users
+            //Get categories from database
+            const categoryRepository = AppDataSource.getRepository(Category)
+            let categories
 
             try {
                 const select = [
-                    'users.id',
-                    'users.department_id',
-                    'users.parent',
-                    'users.username',
-                    'users.fullname',
-                    'users.email',
-                    'users.status',
-                    'users.group_id',
-                    'users.created_at',
-                    'users.updated_at',
+                    'categories.id',
+                    'categories.name',
+                    'categories.language',
+                    'categories.slugs',
+                    'categories.title',
+                    'categories.description',
+                    'categories.keywords',
+                    'categories.photo',
+                    'categories.level',
+                    'categories.status',
+                    'categories.created_at',
+                    'categories.updated_at',
                 ]
 
                 // pagination or get all
@@ -40,30 +42,30 @@ class UserController {
                     const currentPage = Number(req.query.page)
                     const pageItem = config.pageItem
 
-                    users = await userRepository
-                        .createQueryBuilder('users')
+                    categories = await categoryRepository
+                        .createQueryBuilder('categories')
                         .select(select)
                         .skip((currentPage - 1) * pageItem)
                         .take(pageItem)
                         .getMany()
                 } else {
-                    users = await userRepository
-                        .createQueryBuilder('users')
+                    categories = await categoryRepository
+                        .createQueryBuilder('categories')
                         .select(select)
                         .getMany()
                 }
-            } catch (error) {
+            } catch (e) {
                 res.status(404).json({
-                    message: 'Cannot get list users',
+                    message: 'Cannot get list categories',
                 })
             } finally {
                 // disconnect database
                 await AppDataSource.destroy()
             }
 
-            //Send the users object
+            //Send the categories object
             res.status(200).json({
-                data: users,
+                data: categories,
             })
         } else {
             res.status(400).json({
@@ -72,7 +74,7 @@ class UserController {
         }
     }
 
-    // show user detail
+    // show category detail
     static getOneById = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
 
@@ -85,19 +87,19 @@ class UserController {
                 await AppDataSource.initialize()
             }
 
-            //Get the user from database
-            const userRepository = AppDataSource.getRepository(User)
+            //Get the category from database
+            const categoryRepository = AppDataSource.getRepository(Category)
             try {
-                const user = await userRepository.findOneBy({
+                const categories = await categoryRepository.findOneBy({
                     id: id,
                 })
 
                 res.status(200).json({
-                    data: user,
+                    data: categories,
                 })
-            } catch (error) {
+            } catch (e) {
                 res.status(404).json({
-                    message: 'User not found',
+                    message: 'Category not found',
                 })
             } finally {
                 // disconnect database
@@ -110,24 +112,21 @@ class UserController {
         }
     }
 
-    // store new user
-    static newUser = async (req: Request, res: Response) => {
+    static newCategory = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
 
         if (version === 'v1') {
+            const category = new Category()
             //Get parameters from the body
-            const user = new User()
-            for (const key in req.body) {
-                user[key] = req.body[key]
+            for (const categoryKey in req.body) {
+                category[categoryKey] = req.body[categoryKey]
             }
 
-            user['updated_pass'] = new Date()
-
-            //Hash the password, to securely store on DB
-            user.hashPassword()
-
+            category.uuid = uuidv4()
             //Validate if the parameters are ok
-            const errors = await validate(user)
+            const errors = await validate(category, {
+                validationError: { target: false },
+            })
             if (errors.length > 0) {
                 res.status(400).send(errors)
                 return
@@ -138,12 +137,14 @@ class UserController {
                 await AppDataSource.initialize()
             }
 
-            //Try to save. If fails, the username is already in use
-            const userRepository = AppDataSource.getRepository(User)
+            //Try to save. If fails, the category is already in use
+            const categoryRepository = AppDataSource.getRepository(Category)
             try {
-                await userRepository.save(user)
+                await categoryRepository.save(category)
             } catch (e) {
-                res.status(409).send('username already in use')
+                res.status(409).json({
+                    message: 'category already in use',
+                })
                 return
             } finally {
                 // disconnect database
@@ -151,7 +152,9 @@ class UserController {
             }
 
             //If all ok, send 201 response
-            res.status(201).send('User created')
+            res.status(201).json({
+                message: 'Category created',
+            })
         } else {
             res.status(400).json({
                 message: 'API version does not match.',
@@ -159,71 +162,69 @@ class UserController {
         }
     }
 
-    // update user
-    static editUser = async (req: Request, res: Response) => {
+    static editCategory = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
 
         if (version === 'v1') {
-            //Get the ID from body
-            const id = Number(req.body.id)
+            //Get the ID from the url
+            const id = Number(req.params.id)
 
             // connect database
             if (!AppDataSource.isInitialized) {
                 await AppDataSource.initialize()
             }
 
-            //Try to find user on database
-            const userRepository = AppDataSource.getRepository(User)
-            const user = await userRepository.findOneBy({
+            //Try to find category on database
+            const categoryRepository = AppDataSource.getRepository(Category)
+            const category = await categoryRepository.findOneBy({
                 id: id,
             })
 
-            if (!user) {
+            if (!category) {
                 res.status(404).json({
-                    message: 'User not found',
+                    message: 'Category not found',
                 })
                 return
-            } else {
-                // disconnect database
-                await AppDataSource.destroy()
             }
 
+            // disconnect database
+            await AppDataSource.destroy()
+
             //Get values from the body
-            for (const key in req.body) {
-                if (key === 'password') {
-                    user['updated_pass'] = new Date()
-                    user.hashPassword()
-                } else {
-                    user[key] = req.body[key]
-                }
+            for (const categoryKey in req.body) {
+                category[categoryKey] = req.body[categoryKey]
             }
 
             //Validate the new values on model
-            const errors = await validate(user)
+            const errors = await validate(Category)
             if (errors.length > 0) {
                 res.status(400).send(errors)
                 return
             }
 
-            //Try to safe, if fails, that means username already in use
+            //Try to safe, if fails, that means category already in use
             try {
                 // connect database
                 if (!AppDataSource.isInitialized) {
                     await AppDataSource.initialize()
                 }
 
-                await userRepository.save(user)
+                await categoryRepository.save(category)
+
+                // disconnect database
+                await AppDataSource.destroy()
             } catch (e) {
-                res.status(409).send('username already in use')
+                res.status(409).json({
+                    message: 'category already in use',
+                })
                 return
             } finally {
                 // disconnect database
                 await AppDataSource.destroy()
             }
 
-            //Update user successful
             res.status(200).json({
-                message: 'user updated',
+                message: 'category updated',
             })
         } else {
             res.status(400).json({
@@ -232,31 +233,33 @@ class UserController {
         }
     }
 
-    // delete user
-    static deleteUser = async (req: Request, res: Response) => {
+    static deleteCategory = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
 
         if (version === 'v1') {
             //Get the ID from the url
-            const id = Number(req.body.id)
+            const id = Number(req.params.id)
 
             // connect database
             if (!AppDataSource.isInitialized) {
                 await AppDataSource.initialize()
             }
 
-            const userRepository = AppDataSource.getRepository(User)
+            const categoryRepository = AppDataSource.getRepository(Category)
 
-            let user
+            let category
             try {
-                user = await userRepository.findOneOrFail({
+                category = await categoryRepository.findOneOrFail({
                     where: {
                         id: id,
                     },
                 })
-            } catch (error) {
+
+                // disconnect database
+                await AppDataSource.destroy()
+            } catch (e) {
                 res.status(404).json({
-                    message: 'User not found',
+                    message: 'Category not found',
                 })
                 return
             } finally {
@@ -264,14 +267,17 @@ class UserController {
                 await AppDataSource.destroy()
             }
 
-            // remove user
+            // remove category
             try {
                 // connect database
                 if (!AppDataSource.isInitialized) {
                     await AppDataSource.initialize()
                 }
 
-                await userRepository.remove(user)
+                await categoryRepository.remove(category)
+
+                // disconnect database
+                await AppDataSource.destroy()
             } catch (e) {
                 res.status(409).json({
                     message: 'User removed failed.',
@@ -284,7 +290,7 @@ class UserController {
 
             //After all send a 204 (no content, but accepted) response
             res.status(200).json({
-                message: 'User deleted',
+                message: 'category deleted',
             })
         } else {
             res.status(400).json({
@@ -294,4 +300,4 @@ class UserController {
     }
 }
 
-export default UserController
+export default CategoryController
