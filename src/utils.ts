@@ -40,7 +40,6 @@ export default class Utils {
 
         return Object.assign({}, response)
     }
-
     /**
      * format error response
      * @param errors
