@@ -57,7 +57,6 @@ export class User {
     group_id: number
 
     @Column()
-    @IsNotEmpty()
     @Length(6, 255)
     password: string
 
@@ -85,7 +84,6 @@ export class User {
     remember_token: string
 
     @Column()
-    @IsNotEmpty()
     salt: string
 
     @Column({ default: '' })
