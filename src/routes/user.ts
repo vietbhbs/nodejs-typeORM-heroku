@@ -7,7 +7,7 @@ const router = Router()
 router.get('/', UserController.listAll)
 
 // Get one user
-router.get('/show/:id([0-9]+)', UserController.getOneById)
+router.post('/show', UserController.getOneById)
 
 //Create a new user
 router.post('/', UserController.newUser)
