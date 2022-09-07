@@ -1,7 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm'
 import { IsIn, Length } from 'class-validator'
+import config from '../config/config'
 
-@Entity('tnv_data_signature')
+@Entity(config.signatureTable)
 export class Signature {
     @PrimaryGeneratedColumn()
     id: number

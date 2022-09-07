@@ -2,6 +2,7 @@ export default {
     jwtSecret: '@QEGTUI',
     userTable: 'tnv_beetsoft_user',
     categoryTable: 'tnv_category',
+    signatureTable: 'tnv_data_signature',
     pageItem: 10,
     exitCode: {
         success: 0,
