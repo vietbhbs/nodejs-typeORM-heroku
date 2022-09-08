@@ -4,6 +4,7 @@ import { DataSource } from 'typeorm'
 import { User } from './entity/User'
 import { Category } from './entity/Category'
 import { Signature } from './entity/Signature'
+import { Topic } from './entity/Topic'
 
 export const AppDataSource = new DataSource({
     type: 'mysql',
@@ -14,7 +15,7 @@ export const AppDataSource = new DataSource({
     database: process.env.DB_NAME,
     synchronize: true,
     logging: false,
-    entities: [User, Category, Signature],
+    entities: [User, Category, Topic, Signature],
     migrations: [],
     subscribers: [],
 })

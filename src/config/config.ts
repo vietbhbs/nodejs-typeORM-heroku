@@ -3,6 +3,7 @@ export default {
     userTable: 'tnv_beetsoft_user',
     categoryTable: 'tnv_category',
     signatureTable: 'tnv_data_signature',
+    topicTable: 'tnv_topic',
     pageItem: 10,
     exitCode: {
         success: 0,
@@ -46,4 +47,5 @@ export default {
     dataKey: 'data',
     insertIdKey: 'insert_id',
     validKey: 'valid',
+    ttlCache: 259200, //3 days
 }

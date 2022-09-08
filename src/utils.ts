@@ -168,7 +168,7 @@ export default class Utils {
                 }
 
                 result = await signature.getOne()
-                nodeCache.set(cacheKey, result)
+                nodeCache.set(cacheKey, result, config.ttlCache)
             } catch (e) {
                 // console.log(e)
             } finally {
