@@ -47,4 +47,5 @@ export default {
     dataKey: 'data',
     insertIdKey: 'insert_id',
     validKey: 'valid',
+    ttlCache: 259200, //3 days
 }
