@@ -32,6 +32,9 @@ export default class Utils {
         return version.substring(version.indexOf(prefix) + 1)
     }
 
+    /**
+     * format api version not match response
+     */
     static formatAPIVersionNotMatchResponse() {
         const response: string[] = []
         response[config.exitCodeKey] = config.exitCode.apiVersionNotMatch
@@ -111,8 +114,8 @@ export default class Utils {
     }
 
     /**
-     * format error signature response
-     * @param signature
+     * format error data empty response
+     * @param data
      */
     static formatErrorDataIsEmptyResponse(data) {
         const response: string[] = []
@@ -131,6 +134,8 @@ export default class Utils {
 
     /**
      * get user signature
+     * @param nickname
+     * @param role
      */
     static async getUserSignature(nickname, role: number = null) {
         const cacheKey: string =
@@ -169,7 +174,7 @@ export default class Utils {
                 })
 
             result = await signature.getOne()
-            nodeCache.set(cacheKey, result)
+            nodeCache.set(cacheKey, result, config.ttlCache)
         } catch (e) {
             // console.log(e)
         } finally {
