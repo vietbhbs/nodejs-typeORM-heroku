@@ -43,6 +43,7 @@ export default class Utils {
 
         return Object.assign({}, response)
     }
+
     /**
      * format error response
      * @param errors
@@ -136,50 +137,49 @@ export default class Utils {
      * @param nickname
      * @param role
      */
-    static async getUserSignature(nickname = '', role: number = null) {
+    static async getUserSignature(nickname, role: number = null) {
         const cacheKey: string =
             this.constructor.name + Md5.init('data_signature' + nickname + role)
         const nodeCache = new NodeCache()
         let result
 
         if (nodeCache.has(cacheKey)) {
-            result = nodeCache.get(cacheKey)
-        } else {
-            try {
-                // connect database
-                if (!AppDataSource.isInitialized) {
-                    await AppDataSource.initialize()
-                }
+            return nodeCache.get(cacheKey)
+        }
 
-                const signatureRepository = await AppDataSource.getRepository(
-                    Signature,
-                )
-                const signature = await signatureRepository
-                    .createQueryBuilder('signatures')
-                    .select([
-                        'signatures.nickname',
-                        'signatures.signature',
-                        'signatures.role',
-                    ])
-                    .where('signatures.nickname = :nickname', {
-                        nickname: nickname,
-                    })
-                    .andWhere('signatures.status = 1')
-
-                if (role !== null) {
-                    await signature.andWhere('signatures.role = :role', {
-                        role: role,
-                    })
-                }
-
-                result = await signature.getOne()
-                nodeCache.set(cacheKey, result, config.ttlCache)
-            } catch (e) {
-                // console.log(e)
-            } finally {
-                // disconnect database
-                await AppDataSource.destroy()
+        try {
+            // connect database
+            if (!AppDataSource.isInitialized) {
+                await AppDataSource.initialize()
             }
+
+            const signatureRepository = await AppDataSource.getRepository(
+                Signature,
+            )
+            const signature = await signatureRepository
+                .createQueryBuilder('signatures')
+                .select([
+                    'signatures.nickname',
+                    'signatures.signature',
+                    'signatures.role',
+                ])
+                .where('signatures.nickname = :nickname', {
+                    nickname: nickname,
+                })
+                .andWhere('signatures.status = :status', {
+                    status: config.enable,
+                })
+                .andWhere('signatures.role = :role', {
+                    role: role,
+                })
+
+            result = await signature.getOne()
+            nodeCache.set(cacheKey, result, config.ttlCache)
+        } catch (e) {
+            // console.log(e)
+        } finally {
+            // disconnect database
+            await AppDataSource.destroy()
         }
 
         return result
