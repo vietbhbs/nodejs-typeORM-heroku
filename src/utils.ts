@@ -74,10 +74,7 @@ export default class Utils {
 
         response[config.desKey] = actionText + ' - ' + config.message.success
 
-        if (
-            actionText.includes(config.action.create) ||
-            actionText.includes(config.action.update)
-        ) {
+        if (actionText.includes(config.action.create) || actionText.includes(config.action.update)) {
             response[config.insertIdKey] = data
         } else {
             response[config.dataKey] = data
@@ -138,8 +135,7 @@ export default class Utils {
      * @param role
      */
     static async getUserSignature(nickname, role: number = null) {
-        const cacheKey: string =
-            this.constructor.name + Md5.init('data_signature' + nickname + role)
+        const cacheKey: string = this.constructor.name + Md5.init('data_signature' + nickname + role)
         const nodeCache = new NodeCache()
         let result
 
@@ -153,16 +149,10 @@ export default class Utils {
                 await AppDataSource.initialize()
             }
 
-            const signatureRepository = await AppDataSource.getRepository(
-                Signature,
-            )
+            const signatureRepository = await AppDataSource.getRepository(Signature)
             const signature = await signatureRepository
                 .createQueryBuilder('signatures')
-                .select([
-                    'signatures.nickname',
-                    'signatures.signature',
-                    'signatures.role',
-                ])
+                .select(['signatures.nickname', 'signatures.signature', 'signatures.role'])
                 .where('signatures.nickname = :nickname', {
                     nickname: nickname,
                 })

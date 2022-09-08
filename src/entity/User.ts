@@ -1,11 +1,4 @@
-import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    Unique,
-    CreateDateColumn,
-    UpdateDateColumn,
-} from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, Unique, CreateDateColumn, UpdateDateColumn } from 'typeorm'
 import { Length, IsNotEmpty, IsEmail, IsIn } from 'class-validator'
 import * as bcrypt from 'bcryptjs'
 import config from '../config/config'
@@ -40,8 +33,7 @@ export class User {
     address: string
 
     @Column({
-        comment:
-            'Email beetsoft, email cần phải là duy nhất trong toàn bộ hệ thống',
+        comment: 'Email beetsoft, email cần phải là duy nhất trong toàn bộ hệ thống',
     })
     @IsEmail()
     @Length(4, 255)

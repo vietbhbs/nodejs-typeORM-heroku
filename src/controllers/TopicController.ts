@@ -24,12 +24,8 @@ class TopicController {
     static listAll = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
         //get username and signature
-        const username: string = req.query.username
-            ? String(req.query.username)
-            : ''
-        const signature: string = req.query.signature
-            ? String(req.query.signature)
-            : ''
+        const username: string = req.query.username ? String(req.query.username) : ''
+        const signature: string = req.query.signature ? String(req.query.signature) : ''
 
         if (version === 'v1') {
             //check user and signature empty
@@ -39,18 +35,12 @@ class TopicController {
                 return
             } else {
                 // get signature & compare user signature and signature request
-                const user = await Utils.getUserSignature(
-                    String(req.query.username),
-                )
-                const validSignature: string = user
-                    ? Md5.init(String(username) + '$' + user.signature)
-                    : ''
+                const user = await Utils.getUserSignature(String(req.query.username))
+                const validSignature: string = user ? Md5.init(String(username) + '$' + user.signature) : ''
 
                 //check user and signature valid
                 if (validSignature !== String(signature) || !user) {
-                    const response = Utils.formatErrorSignatureResponse(
-                        String(signature),
-                    )
+                    const response = Utils.formatErrorSignatureResponse(String(signature))
                     res.status(400).json(response)
                     return
                 } else {
@@ -76,10 +66,7 @@ class TopicController {
                                 .take(pageItem)
                                 .getMany()
                         } else {
-                            topics = await topicRepository
-                                .createQueryBuilder('topics')
-                                .select(select)
-                                .getMany()
+                            topics = await topicRepository.createQueryBuilder('topics').select(select).getMany()
                         }
                     } catch (e) {
                         res.status(404).json({
@@ -106,12 +93,8 @@ class TopicController {
 
     static getOneById = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
-        const username: string = req.query.username
-            ? String(req.query.username)
-            : ''
-        const signature: string = req.query.signature
-            ? String(req.query.signature)
-            : ''
+        const username: string = req.query.username ? String(req.query.username) : ''
+        const signature: string = req.query.signature ? String(req.query.signature) : ''
 
         if (version === 'v1') {
             if (!username || !signature) {
@@ -120,18 +103,12 @@ class TopicController {
                 return
             } else {
                 // get signature & compare user signature and signature request
-                const user = await Utils.getUserSignature(
-                    String(req.query.username),
-                )
-                const validSignature: string = user
-                    ? Md5.init(String(username) + '$' + user.signature)
-                    : ''
+                const user = await Utils.getUserSignature(String(req.query.username))
+                const validSignature: string = user ? Md5.init(String(username) + '$' + user.signature) : ''
 
                 //check user and signature valid
                 if (validSignature !== String(signature) || !user) {
-                    const response = Utils.formatErrorSignatureResponse(
-                        String(signature),
-                    )
+                    const response = Utils.formatErrorSignatureResponse(String(signature))
                     res.status(400).json(response)
                     return
                 } else {
@@ -174,12 +151,8 @@ class TopicController {
 
     static newTopic = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
-        const username: string = req.query.username
-            ? String(req.query.username)
-            : ''
-        const signature: string = req.query.signature
-            ? String(req.query.signature)
-            : ''
+        const username: string = req.query.username ? String(req.query.username) : ''
+        const signature: string = req.query.signature ? String(req.query.signature) : ''
 
         if (version === 'v1') {
             //check user and signature empty
@@ -192,18 +165,12 @@ class TopicController {
                 return
             } else {
                 // get signature & compare user signature and signature request
-                const user = await Utils.getUserSignature(
-                    String(req.query.username),
-                )
-                const validSignature: string = user
-                    ? Md5.init(String(username) + '$' + user.signature)
-                    : ''
+                const user = await Utils.getUserSignature(String(req.query.username))
+                const validSignature: string = user ? Md5.init(String(username) + '$' + user.signature) : ''
 
                 //check user and signature valid
                 if (validSignature !== String(signature) || !user) {
-                    const response = Utils.formatErrorSignatureResponse(
-                        String(signature),
-                    )
+                    const response = Utils.formatErrorSignatureResponse(String(signature))
                     res.status(400).json(response)
                     return
                 } else {
@@ -258,12 +225,8 @@ class TopicController {
 
     static editTopic = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
-        const username: string = req.query.username
-            ? String(req.query.username)
-            : ''
-        const signature: string = req.query.signature
-            ? String(req.query.signature)
-            : ''
+        const username: string = req.query.username ? String(req.query.username) : ''
+        const signature: string = req.query.signature ? String(req.query.signature) : ''
 
         if (version === 'v1') {
             //check user and signature empty
@@ -276,18 +239,12 @@ class TopicController {
                 return
             } else {
                 // get signature & compare user signature and signature request
-                const user = await Utils.getUserSignature(
-                    String(req.query.username),
-                )
-                const validSignature: string = user
-                    ? Md5.init(String(username) + '$' + user.signature)
-                    : ''
+                const user = await Utils.getUserSignature(String(req.query.username))
+                const validSignature: string = user ? Md5.init(String(username) + '$' + user.signature) : ''
 
                 //check user and signature valid
                 if (validSignature !== String(signature) || !user) {
-                    const response = Utils.formatErrorSignatureResponse(
-                        String(signature),
-                    )
+                    const response = Utils.formatErrorSignatureResponse(String(signature))
                     res.status(400).json(response)
                     return
                 } else {
@@ -355,12 +312,8 @@ class TopicController {
 
     static deleteTopic = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
-        const username: string = req.query.username
-            ? String(req.query.username)
-            : ''
-        const signature: string = req.query.signature
-            ? String(req.query.signature)
-            : ''
+        const username: string = req.query.username ? String(req.query.username) : ''
+        const signature: string = req.query.signature ? String(req.query.signature) : ''
 
         if (version === 'v1') {
             //check user and signature empty
@@ -370,18 +323,12 @@ class TopicController {
                 return
             } else {
                 // get signature & compare user signature and signature request
-                const user = await Utils.getUserSignature(
-                    String(req.query.username),
-                )
-                const validSignature: string = user
-                    ? Md5.init(String(username) + '$' + user.signature)
-                    : ''
+                const user = await Utils.getUserSignature(String(req.query.username))
+                const validSignature: string = user ? Md5.init(String(username) + '$' + user.signature) : ''
 
                 //check user and signature valid
                 if (validSignature !== String(signature) || !user) {
-                    const response = Utils.formatErrorSignatureResponse(
-                        String(signature),
-                    )
+                    const response = Utils.formatErrorSignatureResponse(String(signature))
                     res.status(400).json(response)
                     return
                 } else {
