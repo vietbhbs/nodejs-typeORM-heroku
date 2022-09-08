@@ -3,6 +3,7 @@ export default {
     userTable: 'tnv_beetsoft_user',
     categoryTable: 'tnv_category',
     signatureTable: 'tnv_data_signature',
+    topicTable: 'tnv_topic',
     pageItem: 10,
     exitCode: {
         success: 0,

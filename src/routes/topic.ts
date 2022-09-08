@@ -19,4 +19,5 @@ router.patch('/:id([0-9]+)', TopicController.editTopic)
 
 //Delete one topic
 router.delete('/:id([0-9]+)', TopicController.deleteTopic)
+
 export default router
