@@ -12,12 +12,8 @@ class CategoryController {
     static listAll = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
         //get username and signature
-        const username: string = req.query.username
-            ? String(req.query.username)
-            : ''
-        const signature: string = req.query.signature
-            ? String(req.query.signature)
-            : ''
+        const username: string = req.query.username ? String(req.query.username) : ''
+        const signature: string = req.query.signature ? String(req.query.signature) : ''
 
         if (version === 'v1') {
             //check user and signature empty
@@ -27,18 +23,12 @@ class CategoryController {
                 return
             } else {
                 // get signature & compare user signature and signature request
-                const user = await Utils.getUserSignature(
-                    String(req.query.username),
-                )
-                const validSignature: string = user
-                    ? Md5.init(String(username) + '$' + user.signature)
-                    : ''
+                const user = await Utils.getUserSignature(String(req.query.username))
+                const validSignature: string = user ? Md5.init(String(username) + '$' + user.signature) : ''
 
                 //check user and signature valid
                 if (validSignature !== String(signature) || !user) {
-                    const response = Utils.formatErrorSignatureResponse(
-                        String(signature),
-                    )
+                    const response = Utils.formatErrorSignatureResponse(String(signature))
                     res.status(400).json(response)
                     return
                 } else {
@@ -48,8 +38,7 @@ class CategoryController {
                     }
 
                     //Get categories from database
-                    const categoryRepository =
-                        AppDataSource.getRepository(Category)
+                    const categoryRepository = AppDataSource.getRepository(Category)
                     let categories
 
                     try {
@@ -94,10 +83,7 @@ class CategoryController {
                         await AppDataSource.destroy()
                     }
                     const actionText = config.action.getAll + ' category'
-                    const response = Utils.formatSuccessResponse(
-                        actionText,
-                        categories,
-                    )
+                    const response = Utils.formatSuccessResponse(actionText, categories)
 
                     //Send the categories object
                     res.status(200).json(response)
@@ -113,12 +99,8 @@ class CategoryController {
     // show category detail
     static getOneById = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
-        const username: string = req.query.username
-            ? String(req.query.username)
-            : ''
-        const signature: string = req.query.signature
-            ? String(req.query.signature)
-            : ''
+        const username: string = req.query.username ? String(req.query.username) : ''
+        const signature: string = req.query.signature ? String(req.query.signature) : ''
 
         if (version === 'v1') {
             //check user and signature empty
@@ -128,18 +110,12 @@ class CategoryController {
                 return
             } else {
                 // get signature & compare user signature and signature request
-                const user = await Utils.getUserSignature(
-                    String(req.query.username),
-                )
-                const validSignature: string = user
-                    ? Md5.init(String(username) + '$' + user.signature)
-                    : ''
+                const user = await Utils.getUserSignature(String(req.query.username))
+                const validSignature: string = user ? Md5.init(String(username) + '$' + user.signature) : ''
 
                 //check user and signature valid
                 if (validSignature !== String(signature) || !user) {
-                    const response = Utils.formatErrorSignatureResponse(
-                        String(signature),
-                    )
+                    const response = Utils.formatErrorSignatureResponse(String(signature))
                     res.status(400).json(response)
                     return
                 } else {
@@ -152,8 +128,7 @@ class CategoryController {
                     }
 
                     //Get the category from database
-                    const categoryRepository =
-                        AppDataSource.getRepository(Category)
+                    const categoryRepository = AppDataSource.getRepository(Category)
                     try {
                         const categories = await categoryRepository.findOneBy({
                             id: id,
@@ -182,12 +157,8 @@ class CategoryController {
 
     static newCategory = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
-        const username: string = req.query.username
-            ? String(req.query.username)
-            : ''
-        const signature: string = req.query.signature
-            ? String(req.query.signature)
-            : ''
+        const username: string = req.query.username ? String(req.query.username) : ''
+        const signature: string = req.query.signature ? String(req.query.signature) : ''
 
         if (version === 'v1') {
             //check user and signature empty
@@ -200,18 +171,12 @@ class CategoryController {
                 return
             } else {
                 // get signature & compare user signature and signature request
-                const user = await Utils.getUserSignature(
-                    String(req.query.username),
-                )
-                const validSignature: string = user
-                    ? Md5.init(String(username) + '$' + user.signature)
-                    : ''
+                const user = await Utils.getUserSignature(String(req.query.username))
+                const validSignature: string = user ? Md5.init(String(username) + '$' + user.signature) : ''
 
                 //check user and signature valid
                 if (validSignature !== String(signature) || !user) {
-                    const response = Utils.formatErrorSignatureResponse(
-                        String(signature),
-                    )
+                    const response = Utils.formatErrorSignatureResponse(String(signature))
                     res.status(400).json(response)
                     return
                 } else {
@@ -237,8 +202,7 @@ class CategoryController {
                     }
 
                     //Try to save. If fails, the category is already in use
-                    const categoryRepository =
-                        AppDataSource.getRepository(Category)
+                    const categoryRepository = AppDataSource.getRepository(Category)
                     try {
                         await categoryRepository.save(category)
                     } catch (e) {
@@ -267,12 +231,8 @@ class CategoryController {
 
     static editCategory = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
-        const username: string = req.query.username
-            ? String(req.query.username)
-            : ''
-        const signature: string = req.query.signature
-            ? String(req.query.signature)
-            : ''
+        const username: string = req.query.username ? String(req.query.username) : ''
+        const signature: string = req.query.signature ? String(req.query.signature) : ''
 
         if (version === 'v1') {
             //check user and signature empty
@@ -285,18 +245,12 @@ class CategoryController {
                 return
             } else {
                 // get signature & compare user signature and signature request
-                const user = await Utils.getUserSignature(
-                    String(req.query.username),
-                )
-                const validSignature: string = user
-                    ? Md5.init(String(username) + '$' + user.signature)
-                    : ''
+                const user = await Utils.getUserSignature(String(req.query.username))
+                const validSignature: string = user ? Md5.init(String(username) + '$' + user.signature) : ''
 
                 //check user and signature valid
                 if (validSignature !== String(signature) || !user) {
-                    const response = Utils.formatErrorSignatureResponse(
-                        String(signature),
-                    )
+                    const response = Utils.formatErrorSignatureResponse(String(signature))
                     res.status(400).json(response)
                     return
                 } else {
@@ -309,8 +263,7 @@ class CategoryController {
                     }
 
                     //Try to find category on database
-                    const categoryRepository =
-                        AppDataSource.getRepository(Category)
+                    const categoryRepository = AppDataSource.getRepository(Category)
                     const category = await categoryRepository.findOneBy({
                         id: id,
                     })
@@ -370,12 +323,8 @@ class CategoryController {
 
     static deleteCategory = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
-        const username: string = req.query.username
-            ? String(req.query.username)
-            : ''
-        const signature: string = req.query.signature
-            ? String(req.query.signature)
-            : ''
+        const username: string = req.query.username ? String(req.query.username) : ''
+        const signature: string = req.query.signature ? String(req.query.signature) : ''
 
         if (version === 'v1') {
             //check user and signature empty
@@ -385,18 +334,12 @@ class CategoryController {
                 return
             } else {
                 // get signature & compare user signature and signature request
-                const user = await Utils.getUserSignature(
-                    String(req.query.username),
-                )
-                const validSignature: string = user
-                    ? Md5.init(String(username) + '$' + user.signature)
-                    : ''
+                const user = await Utils.getUserSignature(String(req.query.username))
+                const validSignature: string = user ? Md5.init(String(username) + '$' + user.signature) : ''
 
                 //check user and signature valid
                 if (validSignature !== String(signature) || !user) {
-                    const response = Utils.formatErrorSignatureResponse(
-                        String(signature),
-                    )
+                    const response = Utils.formatErrorSignatureResponse(String(signature))
                     res.status(400).json(response)
                     return
                 } else {
@@ -408,8 +351,7 @@ class CategoryController {
                         await AppDataSource.initialize()
                     }
 
-                    const categoryRepository =
-                        AppDataSource.getRepository(Category)
+                    const categoryRepository = AppDataSource.getRepository(Category)
 
                     let category
                     try {

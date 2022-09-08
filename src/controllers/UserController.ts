@@ -47,10 +47,7 @@ class UserController {
                         .take(pageItem)
                         .getMany()
                 } else {
-                    users = await userRepository
-                        .createQueryBuilder('users')
-                        .select(select)
-                        .getMany()
+                    users = await userRepository.createQueryBuilder('users').select(select).getMany()
                 }
             } catch (error) {
                 res.status(404).json({
@@ -96,16 +93,11 @@ class UserController {
                     .getOne()
 
                 if (!user) {
-                    const response = Utils.formatNotExistRecordResponse(
-                        req.body,
-                    )
+                    const response = Utils.formatNotExistRecordResponse(req.body)
                     res.status(200).json(response)
                 } else {
                     const actionText = config.action.read + ' user'
-                    const response = Utils.formatSuccessResponse(
-                        actionText,
-                        user,
-                    )
+                    const response = Utils.formatSuccessResponse(actionText, user)
 
                     res.status(200).json(response)
                 }
@@ -160,10 +152,7 @@ class UserController {
                 const userRecord = await userRepository.save(user)
                 const actionText = config.action.create + ' user'
 
-                const response = Utils.formatSuccessResponse(
-                    actionText,
-                    userRecord.id,
-                )
+                const response = Utils.formatSuccessResponse(actionText, userRecord.id)
 
                 res.status(201).json(response)
             } catch (e) {
@@ -237,10 +226,7 @@ class UserController {
                 const userRecord = await userRepository.save(user)
                 const actionText = config.action.update + ' user'
 
-                const response = Utils.formatSuccessResponse(
-                    actionText,
-                    userRecord.id,
-                )
+                const response = Utils.formatSuccessResponse(actionText, userRecord.id)
 
                 //Update user successful
                 res.status(200).json(response)
