@@ -159,9 +159,12 @@ export default class Utils {
                 .andWhere('signatures.status = :status', {
                     status: config.enable,
                 })
-                .andWhere('signatures.role = :role', {
+
+            if (role) {
+                await signature.andWhere('signatures.role = :role', {
                     role: role,
                 })
+            }
 
             result = await signature.getOne()
             nodeCache.set(cacheKey, result, config.ttlCache)
