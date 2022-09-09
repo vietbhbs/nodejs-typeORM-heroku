@@ -5,6 +5,7 @@ import { User } from '../entity/User'
 import { AppDataSource } from '../data-source'
 import Utils from '../utils'
 import config from '../config/config'
+import logger from '../logger'
 
 const select = [
     'users.id',
@@ -23,7 +24,7 @@ class UserController {
     // get list users
     static listAll = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
-
+        logger.info('message content', { context: 'index.js', metric: 1 })
         if (version === 'v1') {
             // connect database
             if (!AppDataSource.isInitialized) {
