@@ -1,25 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, Unique } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm'
 import { Length, IsNotEmpty, IsIn } from 'class-validator'
+import config from '../config/config'
 
-@Entity('tnv_tag')
-@Unique([
-    'uuid',
-    'status',
-    'is_hot',
-    'name',
-    'slugs',
-    'language',
-    'title',
-    'description',
-    'keywords',
-    'photo',
-    'viewed',
-    'view_total',
-    'view_day',
-    'view_week',
-    'view_month',
-    'view_year',
-])
+@Entity(config.tagTable)
 export class Tag {
     @PrimaryGeneratedColumn()
     id: number
@@ -30,18 +13,16 @@ export class Tag {
     uuid: string
 
     @Column(['varchar', { length: 50 }, { default: 1 }])
-    @IsNotEmpty()
-    @IsIn([0, 1, 2])
-    @Length(1, 4)
+    @IsIn([0, 1])
     status: string
 
     @Column({ default: 1 })
     @IsNotEmpty()
     is_hot: number
 
-    @Column('varchar', { length: 100 })
+    @Column()
     @IsNotEmpty()
-    @Length(4, 50)
+    @Length(5, 100)
     name: string
 
     @Column('varchar', { length: 100 })
@@ -49,58 +30,83 @@ export class Tag {
     @Length(4, 50)
     slugs: string
 
-    @Column(['varchar', { length: 50 }, { default: 'vietnamese' }])
-    @IsNotEmpty()
-    @Length(4, 50)
+    @Column({
+        type: 'varchar',
+        nullable: true,
+        length: 50,
+    })
     language: string
 
-    @Column(['varchar', { length: 100 }, { nullable: true }])
-    @IsNotEmpty()
-    @Length(4, 50)
+    @Column()
     title: string
 
-    @Column(['varchar', { length: 255 }, { nullable: true }])
-    @Length(4, 50)
+    @Column()
     description: string
 
-    @Column(['varchar', { length: 50 }, { nullable: true }])
-    @IsNotEmpty()
-    @Length(4, 50)
+    @Column()
     keywords: string
 
-    @Column(['varchar', { length: 100 }, { nullable: true }])
-    @IsNotEmpty()
-    @Length(4, 50)
+    @Column()
     photo: string
 
-    @Column(['varchar', { length: 50 }, { nullable: true }])
-    @IsNotEmpty()
-    @Length(4, 50)
+    @Column({
+        type: 'text',
+        nullable: true,
+        // default: '0',
+    })
     viewed: string
 
-    @Column(['varchar', { length: 50 }, { nullable: true }])
-    @IsNotEmpty()
-    @Length(4, 50)
-    view_total: string
+    @Column({
+        type: 'int',
+        name: 'view_total',
+        precision: 10,
+        default: 0,
+    })
+    view_total: number
 
-    @Column(['varchar', { length: 50 }, { nullable: true }])
-    @Length(4, 50)
-    view_day: string
+    @Column({
+        type: 'int',
+        name: 'view_day',
+        precision: 10,
+        default: 0,
+    })
+    view_day: number
 
-    @Column({ nullable: true })
+    @Column({
+        type: 'int',
+        name: 'view_week',
+        precision: 10,
+        default: 0,
+    })
     view_week: number
 
-    @Column({ nullable: true })
+    @Column({
+        type: 'int',
+        name: 'view_month',
+        precision: 10,
+        default: 0,
+    })
     view_month: number
 
-    @Column({ nullable: true })
+    @Column({
+        type: 'int',
+        name: 'view_year',
+        precision: 10,
+        default: 0,
+    })
     view_year: number
 
-    @Column()
-    @IsNotEmpty()
-    created_at: Date
+    @CreateDateColumn({
+        type: 'datetime',
+        name: 'created_at',
+        nullable: true,
+    })
+    createdAt: Date
 
-    @Column()
-    @IsNotEmpty()
-    updated_at: Date
+    @UpdateDateColumn({
+        type: 'datetime',
+        name: 'updated_at',
+        nullable: true,
+    })
+    updatedAt: Date
 }

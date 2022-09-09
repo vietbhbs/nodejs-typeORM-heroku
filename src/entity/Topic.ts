@@ -95,7 +95,7 @@ export class Topic {
     @Column({
         type: 'text',
         nullable: true,
-        default: '0',
+        // default: '0',
     })
     viewed: string
 

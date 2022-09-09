@@ -174,33 +174,187 @@ class TagController {
         }
     }
 
-    // show Tag detail
+    // show tag detail
     static getTagById = async (req: Request, res: Response) => {
-        //Get the ID from the url
-        const id = Number(req.params.id)
+        const version = Utils.getApiVersion(req.baseUrl, res)
 
-        // connect database
-        if (!AppDataSource.isInitialized) {
-            await AppDataSource.initialize()
+        if (version === 'v1') {
+            // validate signature
+            if (!(await Utils.validateSignature(req, res))) {
+                return
+            }
+
+            //Get the ID from the url
+            const id = Number(req.params.id)
+
+            // connect database
+            if (!AppDataSource.isInitialized) {
+                await AppDataSource.initialize()
+            }
+
+            //Get the category from database
+            const tagRepository = AppDataSource.getRepository(Tag)
+            try {
+                const tags = await tagRepository.findOneBy({
+                    id: id,
+                })
+
+                res.status(200).json({
+                    data: tags,
+                })
+            } catch (e) {
+                res.status(404).json({
+                    message: 'Tag not found',
+                })
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
+            }
+        } else {
+            const response = Utils.formatAPIVersionNotMatchResponse()
+
+            //API Version Not Match
+            res.status(200).json(response)
         }
+    }
 
-        //Get the tag from database
-        const tagRepository = AppDataSource.getRepository(Tag)
-        try {
+    static editTag = async (req: Request, res: Response) => {
+        const version = Utils.getApiVersion(req.baseUrl, res)
+
+        if (version === 'v1') {
+            // validate signature
+            if (!(await Utils.validateSignature(req, res))) {
+                return
+            }
+
+            //Get the ID from the url
+            const id = Number(req.params.id)
+
+            // connect database
+            if (!AppDataSource.isInitialized) {
+                await AppDataSource.initialize()
+            }
+
+            //Try to find category on database
+            const tagRepository = AppDataSource.getRepository(Tag)
             const tag = await tagRepository.findOneBy({
                 id: id,
             })
 
-            res.status(200).json({
-                data: tag,
-            })
-        } catch (error) {
-            res.status(404).json({
-                message: 'Tag not found',
-            })
-        } finally {
+            if (!tag) {
+                res.status(404).json({
+                    message: 'Tag not found',
+                })
+                return
+            }
+
             // disconnect database
             await AppDataSource.destroy()
+
+            //Get values from the body
+            for (const tagKey in req.body) {
+                tag[tagKey] = req.body[tagKey]
+            }
+
+            //Validate the new values on model
+            const errors = await validate(Tag)
+            if (errors.length > 0) {
+                res.status(400).send(errors)
+                return
+            }
+
+            //Try to safe, if fails, that means category already in use
+            try {
+                // connect database
+                if (!AppDataSource.isInitialized) {
+                    await AppDataSource.initialize()
+                }
+
+                await tagRepository.save(tag)
+            } catch (e) {
+                res.status(409).json({
+                    message: 'TAG ERROR UPDATE',
+                })
+                return
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
+            }
+
+            res.status(200).json({
+                message: 'Tag updated',
+            })
+        } else {
+            const response = Utils.formatAPIVersionNotMatchResponse()
+
+            //API Version Not Match
+            res.status(200).json(response)
+        }
+    }
+
+    static deleteTag = async (req: Request, res: Response) => {
+        const version = Utils.getApiVersion(req.baseUrl, res)
+
+        if (version === 'v1') {
+            // validate signature
+            if (!(await Utils.validateSignature(req, res))) {
+                return
+            }
+
+            //Get the ID from the url
+            const id = Number(req.params.id)
+
+            // connect database
+            if (!AppDataSource.isInitialized) {
+                await AppDataSource.initialize()
+            }
+
+            const tagRepository = AppDataSource.getRepository(Tag)
+
+            let tag
+            try {
+                tag = await tagRepository.findOneOrFail({
+                    where: {
+                        id: id,
+                    },
+                })
+            } catch (e) {
+                res.status(404).json({
+                    message: 'tag not found',
+                })
+                return
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
+            }
+
+            // remove category
+            try {
+                // connect database
+                if (!AppDataSource.isInitialized) {
+                    await AppDataSource.initialize()
+                }
+
+                await tagRepository.remove(tag)
+            } catch (e) {
+                res.status(409).json({
+                    message: 'tag removed failed.',
+                })
+                return
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
+            }
+
+            //After all send a 204 (no content, but accepted) response
+            res.status(200).json({
+                message: 'tag deleted',
+            })
+        } else {
+            const response = Utils.formatAPIVersionNotMatchResponse()
+
+            //API Version Not Match
+            res.status(200).json(response)
         }
     }
 }

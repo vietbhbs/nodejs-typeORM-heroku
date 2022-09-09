@@ -1,9 +1,10 @@
 export default {
     jwtSecret: '@QEGTUI',
-    userTable: 'tnv_beetsoft_user',
+    userTable: 'tnv_user',
     categoryTable: 'tnv_category',
     signatureTable: 'tnv_data_signature',
     topicTable: 'tnv_topic',
+    tagTable: 'tnv_tag',
     pageItem: 10,
     exitCode: {
         success: 0,
