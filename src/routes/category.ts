@@ -6,17 +6,17 @@ import CategoryController from '../controllers/CategoryController'
 const router = Router()
 
 //Get all categories
-router.get('/', CategoryController.listAll)
+router.post('/', CategoryController.listAll)
 
 // Get one category
-router.get('/:id([0-9]+)', CategoryController.getOneById)
+router.post('/show/:id([0-9]+)', CategoryController.getOneById)
 
 //Create a new category
-router.post('/', CategoryController.newCategory)
+router.post('/add', CategoryController.newCategory)
 
 //Edit one category
-router.patch('/:id([0-9]+)', CategoryController.editCategory)
+router.post('/edit/:id([0-9]+)', CategoryController.editCategory)
 
-router.delete('/:id([0-9]+)', CategoryController.deleteCategory)
+router.post('/delete/:id([0-9]+)', CategoryController.deleteCategory)
 
 export default router
