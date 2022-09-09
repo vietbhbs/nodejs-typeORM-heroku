@@ -2,6 +2,8 @@ export default {
     jwtSecret: '@QEGTUI',
     userTable: 'tnv_beetsoft_user',
     categoryTable: 'tnv_category',
+    signatureTable: 'tnv_data_signature',
+    topicTable: 'tnv_topic',
     pageItem: 10,
     exitCode: {
         success: 0,
@@ -16,6 +18,7 @@ export default {
         notChange: 9,
         notUnique: 10,
         failed: 11,
+        apiVersionNotMatch: 12,
     },
     message: {
         invalidSignature: 'Sai chu ky xac thuc',
@@ -27,8 +30,24 @@ export default {
         fieldNotFound: 'khong ton tai',
         notChange: 'Update that bai, data khong thay doi',
         notUnique: 'da ton tai, hay thu lai',
+        apiVersionNotMatch: 'API version does not match.',
+    },
+    action: {
+        create: 'create',
+        getAll: 'list',
+        update: 'update',
+        read: 'show',
+        delete: 'delete',
+        login: 'login',
+        register: 'register',
     },
     exitCodeKey: 'exitCode',
     desKey: 'desc',
     inputDataKey: 'inputData',
+    dataKey: 'data',
+    insertIdKey: 'insert_id',
+    validKey: 'valid',
+    disable: 0,
+    enable: 1,
+    ttlCache: 259200, //3 days
 }

@@ -1,10 +1,4 @@
-import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    CreateDateColumn,
-    UpdateDateColumn,
-} from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm'
 import config from '../config/config'
 
 import { IsIn, Length, Min, IsNotEmpty } from 'class-validator'
@@ -35,12 +29,12 @@ export class Category {
     })
     language: string
 
-    @Column({ unique: true })
+    @Column()
     @IsNotEmpty()
     @Length(1, 50)
     slugs: string
 
-    @Column({ unique: true })
+    @Column()
     @IsNotEmpty()
     @Length(5, 256)
     title: string

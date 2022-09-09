@@ -1,14 +1,26 @@
 import { Request, Response } from 'express'
-import { Category } from '../entity/Category'
 import { AppDataSource } from '../data-source'
+import { Topic } from '../entity/Topic'
 import { validate } from 'class-validator'
 import { v4 as uuidv4 } from 'uuid'
 import Utils from '../utils'
 import config from '../config/config'
 import { Md5 } from 'md5-typescript'
 
-class CategoryController {
-    // get list categories
+const select = [
+    'topics.id',
+    'topics.name',
+    'topics.is_hot',
+    'topics.slugs',
+    'topics.title',
+    'topics.status',
+    'topics.description',
+    'topics.content',
+    'topics.keywords',
+    'topics.photo',
+]
+
+class TopicController {
     static listAll = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
         //get username and signature
@@ -32,78 +44,59 @@ class CategoryController {
                     res.status(400).json(response)
                     return
                 } else {
-                    //connect database
+                    // connect database
                     if (!AppDataSource.isInitialized) {
                         await AppDataSource.initialize()
                     }
 
-                    //Get categories from database
-                    const categoryRepository = AppDataSource.getRepository(Category)
-                    let categories
+                    //Get topics from database
+                    const topicRepository = AppDataSource.getRepository(Topic)
+                    let topics
 
                     try {
-                        const select = [
-                            'categories.id',
-                            'categories.name',
-                            'categories.language',
-                            'categories.slugs',
-                            'categories.title',
-                            'categories.description',
-                            'categories.keywords',
-                            'categories.photo',
-                            'categories.level',
-                            'categories.status',
-                            'categories.created_at',
-                            'categories.updated_at',
-                        ]
-
                         // pagination or get all
                         if (req.query.page) {
                             const currentPage = Number(req.query.page)
-                            const pageItem = config.pageItem
+                            const pageItem: number = config.pageItem
 
-                            categories = await categoryRepository
-                                .createQueryBuilder('categories')
+                            topics = await topicRepository
+                                .createQueryBuilder('topics')
                                 .select(select)
                                 .skip((currentPage - 1) * pageItem)
                                 .take(pageItem)
                                 .getMany()
                         } else {
-                            categories = await categoryRepository
-                                .createQueryBuilder('categories')
-                                .select(select)
-                                .getMany()
+                            topics = await topicRepository.createQueryBuilder('topics').select(select).getMany()
                         }
                     } catch (e) {
                         res.status(404).json({
-                            message: 'Cannot get list categories',
+                            message: 'Cannot get list topics',
                         })
                     } finally {
                         // disconnect database
                         await AppDataSource.destroy()
                     }
-                    const actionText = config.action.getAll + ' category'
-                    const response = Utils.formatSuccessResponse(actionText, categories)
 
                     //Send the categories object
-                    res.status(200).json(response)
+                    res.status(200).json({
+                        data: topics,
+                    })
                 }
             }
         } else {
-            res.status(400).json({
-                message: 'API version does not match.',
-            })
+            const response = Utils.formatAPIVersionNotMatchResponse()
+
+            //API Version Not Match
+            res.status(200).json(response)
         }
     }
 
-    // show category detail
     static getOneById = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
         const username: string = req.query.username ? String(req.query.username) : ''
         const signature: string = req.query.signature ? String(req.query.signature) : ''
 
         if (version === 'v1') {
-            //check user and signature empty
             if (!username || !signature) {
                 const response = Utils.formatErrorDataIsEmptyResponse(req.query)
                 res.status(400).json(response)
@@ -127,19 +120,20 @@ class CategoryController {
                         await AppDataSource.initialize()
                     }
 
-                    //Get the category from database
-                    const categoryRepository = AppDataSource.getRepository(Category)
+                    //Get the topic from database
+                    const topicRepository = AppDataSource.getRepository(Topic)
+
                     try {
-                        const categories = await categoryRepository.findOneBy({
+                        const topics = await topicRepository.findOneBy({
                             id: id,
                         })
 
                         res.status(200).json({
-                            data: categories,
+                            data: topics,
                         })
-                    } catch (e) {
+                    } catch (error) {
                         res.status(404).json({
-                            message: 'Category not found',
+                            message: 'Topic not found',
                         })
                     } finally {
                         // disconnect database
@@ -155,7 +149,7 @@ class CategoryController {
         }
     }
 
-    static newCategory = async (req: Request, res: Response) => {
+    static newTopic = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
         const username: string = req.query.username ? String(req.query.username) : ''
         const signature: string = req.query.signature ? String(req.query.signature) : ''
@@ -180,15 +174,15 @@ class CategoryController {
                     res.status(400).json(response)
                     return
                 } else {
-                    const category = new Category()
+                    const topic = new Topic()
                     //Get parameters from the body
-                    for (const categoryKey in req.body) {
-                        category[categoryKey] = req.body[categoryKey]
+                    for (const topicKey in req.body) {
+                        topic[topicKey] = req.body[topicKey]
                     }
+                    topic.uuid = uuidv4()
 
-                    category.uuid = uuidv4()
                     //Validate if the parameters are ok
-                    const errors = await validate(category, {
+                    const errors = await validate(topic, {
                         validationError: { target: false },
                     })
                     if (errors.length > 0) {
@@ -202,12 +196,12 @@ class CategoryController {
                     }
 
                     //Try to save. If fails, the category is already in use
-                    const categoryRepository = AppDataSource.getRepository(Category)
+                    const topicRepository = AppDataSource.getRepository(Topic)
                     try {
-                        await categoryRepository.save(category)
+                        await topicRepository.save(topic)
                     } catch (e) {
                         res.status(409).json({
-                            message: 'category already in use',
+                            message: 'topic already in use',
                         })
                         return
                     } finally {
@@ -217,7 +211,7 @@ class CategoryController {
 
                     //If all ok, send 201 response
                     res.status(201).json({
-                        message: 'Category created',
+                        message: 'topic created',
                     })
                 }
             }
@@ -229,7 +223,7 @@ class CategoryController {
         }
     }
 
-    static editCategory = async (req: Request, res: Response) => {
+    static editTopic = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
         const username: string = req.query.username ? String(req.query.username) : ''
         const signature: string = req.query.signature ? String(req.query.signature) : ''
@@ -263,12 +257,12 @@ class CategoryController {
                     }
 
                     //Try to find category on database
-                    const categoryRepository = AppDataSource.getRepository(Category)
-                    const category = await categoryRepository.findOneBy({
+                    const topicRepository = AppDataSource.getRepository(Topic)
+                    const topic = await topicRepository.findOneBy({
                         id: id,
                     })
 
-                    if (!category) {
+                    if (!topic) {
                         res.status(404).json({
                             message: 'Category not found',
                         })
@@ -279,28 +273,23 @@ class CategoryController {
                     await AppDataSource.destroy()
 
                     //Get values from the body
-                    for (const categoryKey in req.body) {
-                        category[categoryKey] = req.body[categoryKey]
+                    for (const topicKey in req.body) {
+                        topic[topicKey] = req.body[topicKey]
                     }
 
                     //Validate the new values on model
-                    const errors = await validate(Category)
+                    const errors = await validate(Topic)
                     if (errors.length > 0) {
                         res.status(400).send(errors)
                         return
                     }
 
-                    //Try to safe, if fails, that means category already in use
+                    //Try to safe, if fails, that means topic already in use
                     try {
-                        // connect database
-                        if (!AppDataSource.isInitialized) {
-                            await AppDataSource.initialize()
-                        }
-
-                        await categoryRepository.save(category)
+                        await topicRepository.save(topic)
                     } catch (e) {
                         res.status(409).json({
-                            message: 'category already in use',
+                            message: 'topic already in use',
                         })
                         return
                     } finally {
@@ -309,7 +298,7 @@ class CategoryController {
                     }
 
                     res.status(200).json({
-                        message: 'category updated',
+                        message: 'topic updated',
                     })
                 }
             }
@@ -321,7 +310,7 @@ class CategoryController {
         }
     }
 
-    static deleteCategory = async (req: Request, res: Response) => {
+    static deleteTopic = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
         const username: string = req.query.username ? String(req.query.username) : ''
         const signature: string = req.query.signature ? String(req.query.signature) : ''
@@ -351,18 +340,18 @@ class CategoryController {
                         await AppDataSource.initialize()
                     }
 
-                    const categoryRepository = AppDataSource.getRepository(Category)
+                    const topicRepository = AppDataSource.getRepository(Topic)
+                    let topic
 
-                    let category
                     try {
-                        category = await categoryRepository.findOneOrFail({
+                        topic = await topicRepository.findOneOrFail({
                             where: {
                                 id: id,
                             },
                         })
-                    } catch (e) {
+                    } catch (error) {
                         res.status(404).json({
-                            message: 'Category not found',
+                            message: 'Topic not found',
                         })
                         return
                     } finally {
@@ -370,27 +359,25 @@ class CategoryController {
                         await AppDataSource.destroy()
                     }
 
-                    // remove category
                     try {
                         // connect database
                         if (!AppDataSource.isInitialized) {
                             await AppDataSource.initialize()
                         }
 
-                        await categoryRepository.remove(category)
+                        await topicRepository.remove(topic)
                     } catch (e) {
                         res.status(409).json({
-                            message: 'User removed failed.',
+                            message: 'Topic removed failed.',
                         })
                         return
                     } finally {
-                        // disconnect database
                         await AppDataSource.destroy()
                     }
 
                     //After all send a 204 (no content, but accepted) response
                     res.status(200).json({
-                        message: 'category deleted',
+                        message: 'topic deleted',
                     })
                 }
             }
@@ -403,4 +390,4 @@ class CategoryController {
     }
 }
 
-export default CategoryController
+export default TopicController

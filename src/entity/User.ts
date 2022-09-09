@@ -1,11 +1,4 @@
-import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    Unique,
-    CreateDateColumn,
-    UpdateDateColumn,
-} from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, Unique, CreateDateColumn, UpdateDateColumn } from 'typeorm'
 import { Length, IsNotEmpty, IsEmail, IsIn } from 'class-validator'
 import * as bcrypt from 'bcryptjs'
 import config from '../config/config'
@@ -16,35 +9,37 @@ export class User {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column()
+    @Column({ comment: 'Id của phòng / ban' })
     @IsNotEmpty()
     department_id: number
 
-    @Column({ default: 0 })
+    @Column({ default: 0, comment: 'ID user cha' })
     @IsNotEmpty()
     parent: number
 
-    @Column()
+    @Column({ comment: 'Username duy nhất trong hệ thống' })
     @IsNotEmpty()
     @Length(4, 255)
     username: string
 
-    @Column()
+    @Column({ comment: 'Fullname' })
     @IsNotEmpty()
     @Length(4, 255)
     fullname: string
 
-    @Column()
+    @Column({ comment: 'địa chỉ' })
     @IsNotEmpty()
     @Length(4, 255)
     address: string
 
-    @Column()
+    @Column({
+        comment: 'Email beetsoft, email cần phải là duy nhất trong toàn bộ hệ thống',
+    })
     @IsEmail()
     @Length(4, 255)
     email: string
 
-    @Column()
+    @Column({ comment: '1 = Active, 0 = Deactive, 2 = Wait active' })
     @IsNotEmpty()
     @IsIn([0, 1, 2])
     status: number
@@ -52,16 +47,19 @@ export class User {
     @Column({ nullable: true })
     avatar: string
 
-    @Column()
+    @Column({ comment: 'ID của nhóm quyền được phân' })
     @IsNotEmpty()
     group_id: number
 
     @Column()
-    @IsNotEmpty()
     @Length(6, 255)
     password: string
 
-    @Column({ nullable: true, default: 0 })
+    @Column({
+        nullable: true,
+        default: 0,
+        comment: '0 - chưa cập nhật , 1- đã cập nhật',
+    })
     reset_password: number
 
     @Column()
@@ -85,7 +83,6 @@ export class User {
     remember_token: string
 
     @Column()
-    @IsNotEmpty()
     salt: string
 
     @Column({ default: '' })

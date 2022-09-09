@@ -6,6 +6,19 @@ import { AppDataSource } from '../data-source'
 import Utils from '../utils'
 import config from '../config/config'
 
+const select = [
+    'users.id',
+    'users.department_id',
+    'users.parent',
+    'users.username',
+    'users.fullname',
+    'users.email',
+    'users.status',
+    'users.group_id',
+    'users.created_at',
+    'users.updated_at',
+]
+
 class UserController {
     // get list users
     static listAll = async (req: Request, res: Response) => {
@@ -22,19 +35,6 @@ class UserController {
             let users
 
             try {
-                const select = [
-                    'users.id',
-                    'users.department_id',
-                    'users.parent',
-                    'users.username',
-                    'users.fullname',
-                    'users.email',
-                    'users.status',
-                    'users.group_id',
-                    'users.created_at',
-                    'users.updated_at',
-                ]
-
                 // pagination or get all
                 if (req.query.page) {
                     const currentPage = Number(req.query.page)
@@ -47,10 +47,7 @@ class UserController {
                         .take(pageItem)
                         .getMany()
                 } else {
-                    users = await userRepository
-                        .createQueryBuilder('users')
-                        .select(select)
-                        .getMany()
+                    users = await userRepository.createQueryBuilder('users').select(select).getMany()
                 }
             } catch (error) {
                 res.status(404).json({
@@ -61,14 +58,15 @@ class UserController {
                 await AppDataSource.destroy()
             }
 
+            const actionText = config.action.getAll + ' user'
+            const response = Utils.formatSuccessResponse(actionText, users)
             //Send the users object
-            res.status(200).json({
-                data: users,
-            })
+            res.status(200).json(response)
         } else {
-            res.status(400).json({
-                message: 'API version does not match.',
-            })
+            const response = Utils.formatAPIVersionNotMatchResponse()
+
+            //API Version Not Match
+            res.status(200).json(response)
         }
     }
 
@@ -78,7 +76,7 @@ class UserController {
 
         if (version === 'v1') {
             //Get the ID from the url
-            const id = Number(req.params.id)
+            const id = Number(req.body.id)
 
             // connect database
             if (!AppDataSource.isInitialized) {
@@ -88,25 +86,34 @@ class UserController {
             //Get the user from database
             const userRepository = AppDataSource.getRepository(User)
             try {
-                const user = await userRepository.findOneBy({
-                    id: id,
-                })
+                const user = await userRepository
+                    .createQueryBuilder('users')
+                    .select(select)
+                    .where('users.id = :id', { id: id })
+                    .getOne()
 
-                res.status(200).json({
-                    data: user,
-                })
+                if (!user) {
+                    const response = Utils.formatNotExistRecordResponse(req.body)
+                    res.status(200).json(response)
+                } else {
+                    const actionText = config.action.read + ' user'
+                    const response = Utils.formatSuccessResponse(actionText, user)
+
+                    res.status(200).json(response)
+                }
             } catch (error) {
                 res.status(404).json({
-                    message: 'User not found',
+                    message: 'Cannot get user detail',
                 })
             } finally {
                 // disconnect database
                 await AppDataSource.destroy()
             }
         } else {
-            res.status(400).json({
-                message: 'API version does not match.',
-            })
+            const response = Utils.formatAPIVersionNotMatchResponse()
+
+            //API Version Not Match
+            res.status(200).json(response)
         }
     }
 
@@ -123,15 +130,16 @@ class UserController {
 
             user['updated_pass'] = new Date()
 
-            //Hash the password, to securely store on DB
-            user.hashPassword()
-
             //Validate if the parameters are ok
             const errors = await validate(user)
             if (errors.length > 0) {
-                res.status(400).send(errors)
+                const response = Utils.formatErrorResponse(errors)
+                res.status(400).json(response)
                 return
             }
+
+            //Hash the password, to securely store on DB
+            user.hashPassword()
 
             // connect database
             if (!AppDataSource.isInitialized) {
@@ -141,7 +149,12 @@ class UserController {
             //Try to save. If fails, the username is already in use
             const userRepository = AppDataSource.getRepository(User)
             try {
-                await userRepository.save(user)
+                const userRecord = await userRepository.save(user)
+                const actionText = config.action.create + ' user'
+
+                const response = Utils.formatSuccessResponse(actionText, userRecord.id)
+
+                res.status(201).json(response)
             } catch (e) {
                 res.status(409).send('username already in use')
                 return
@@ -149,13 +162,11 @@ class UserController {
                 // disconnect database
                 await AppDataSource.destroy()
             }
-
-            //If all ok, send 201 response
-            res.status(201).send('User created')
         } else {
-            res.status(400).json({
-                message: 'API version does not match.',
-            })
+            const response = Utils.formatAPIVersionNotMatchResponse()
+
+            //API Version Not Match
+            res.status(200).json(response)
         }
     }
 
@@ -179,9 +190,8 @@ class UserController {
             })
 
             if (!user) {
-                res.status(404).json({
-                    message: 'User not found',
-                })
+                const response = Utils.formatNotExistRecordResponse(req.body)
+                res.status(200).json(response)
                 return
             } else {
                 // disconnect database
@@ -201,7 +211,8 @@ class UserController {
             //Validate the new values on model
             const errors = await validate(user)
             if (errors.length > 0) {
-                res.status(400).send(errors)
+                const response = Utils.formatErrorResponse(errors)
+                res.status(400).send(response)
                 return
             }
 
@@ -212,7 +223,13 @@ class UserController {
                     await AppDataSource.initialize()
                 }
 
-                await userRepository.save(user)
+                const userRecord = await userRepository.save(user)
+                const actionText = config.action.update + ' user'
+
+                const response = Utils.formatSuccessResponse(actionText, userRecord.id)
+
+                //Update user successful
+                res.status(200).json(response)
             } catch (e) {
                 res.status(409).send('username already in use')
                 return
@@ -220,15 +237,11 @@ class UserController {
                 // disconnect database
                 await AppDataSource.destroy()
             }
-
-            //Update user successful
-            res.status(200).json({
-                message: 'user updated',
-            })
         } else {
-            res.status(400).json({
-                message: 'API version does not match.',
-            })
+            const response = Utils.formatAPIVersionNotMatchResponse()
+
+            //API Version Not Match
+            res.status(200).json(response)
         }
     }
 
@@ -255,9 +268,8 @@ class UserController {
                     },
                 })
             } catch (error) {
-                res.status(404).json({
-                    message: 'User not found',
-                })
+                const response = Utils.formatNotExistRecordResponse(req.body)
+                res.status(200).json(response)
                 return
             } finally {
                 // disconnect database
@@ -272,6 +284,12 @@ class UserController {
                 }
 
                 await userRepository.remove(user)
+
+                const actionText = config.action.delete + ' user'
+                const response = Utils.formatSuccessResponse(actionText, id)
+
+                //Remove user successful
+                res.status(200).json(response)
             } catch (e) {
                 res.status(409).json({
                     message: 'User removed failed.',
@@ -281,15 +299,11 @@ class UserController {
                 // disconnect database
                 await AppDataSource.destroy()
             }
-
-            //After all send a 204 (no content, but accepted) response
-            res.status(200).json({
-                message: 'User deleted',
-            })
         } else {
-            res.status(400).json({
-                message: 'API version does not match.',
-            })
+            const response = Utils.formatAPIVersionNotMatchResponse()
+
+            //API Version Not Match
+            res.status(200).json(response)
         }
     }
 }
