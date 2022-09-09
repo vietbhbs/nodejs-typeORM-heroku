@@ -1,4 +1,4 @@
-import { Response } from 'express'
+import { Request, Response } from 'express'
 import { AppDataSource } from './data-source'
 import { Md5 } from 'md5-typescript'
 import * as NodeCache from 'node-cache'
@@ -98,19 +98,6 @@ export default class Utils {
     }
 
     /**
-     * format error signature response
-     * @param signature
-     */
-    static formatErrorSignatureResponse(signature: string) {
-        const response: string[] = []
-        response[config.exitCodeKey] = config.exitCode.invalidSignature
-        response[config.desKey] = config.message.invalidSignature
-        response[config.validKey] = signature
-
-        return Object.assign({}, response)
-    }
-
-    /**
      * format error data empty response
      * @param data
      */
@@ -130,12 +117,55 @@ export default class Utils {
     }
 
     /**
+     * validate signature
+     * @param req
+     * @param res
+     */
+    static async validateSignature(req: Request, res: Response) {
+        //get username and signature
+        const username: string = req.body.username ? String(req.body.username) : ''
+        const signature: string = req.body.signature ? String(req.body.signature) : ''
+
+        //check user and signature empty
+        if (!username || !signature) {
+            const response = this.formatErrorDataIsEmptyResponse(req.body)
+            res.status(400).json(response)
+            return false
+        }
+
+        // get signature & compare user signature and signature request
+        const user = await this.getUserSignature(String(username))
+        const validSignature: string = user ? Md5.init(String(username) + '$' + user.signature) : ''
+
+        //check user and signature valid
+        if (validSignature !== String(signature) || !user) {
+            const response = this.formatErrorSignatureResponse(validSignature)
+            res.status(400).json(response)
+            return false
+        }
+
+        return true
+    }
+
+    /**
+     * format error signature response
+     * @param signature
+     */
+    static formatErrorSignatureResponse(signature: string) {
+        const response: string[] = []
+        response[config.exitCodeKey] = config.exitCode.invalidSignature
+        response[config.desKey] = config.message.invalidSignature
+        response[config.validKey] = signature
+
+        return Object.assign({}, response)
+    }
+
+    /**
      * get user signature
      * @param nickname
-     * @param role
      */
-    static async getUserSignature(nickname, role: number = null) {
-        const cacheKey: string = this.constructor.name + Md5.init('data_signature' + nickname + role)
+    static async getUserSignature(nickname) {
+        const cacheKey: string = this.constructor.name + Md5.init('data_signature' + nickname)
         const nodeCache = new NodeCache()
         let result
 
@@ -158,9 +188,6 @@ export default class Utils {
                 })
                 .andWhere('signatures.status = :status', {
                     status: config.enable,
-                })
-                .andWhere('signatures.role = :role', {
-                    role: role,
                 })
 
             result = await signature.getOne()
