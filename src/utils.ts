@@ -4,6 +4,7 @@ import { Md5 } from 'md5-typescript'
 import * as NodeCache from 'node-cache'
 import config from './config/config'
 import { Signature } from './entity/Signature'
+import logger from './logger'
 
 export default class Utils {
     /**
@@ -126,9 +127,19 @@ export default class Utils {
         const username: string = req.body.username ? String(req.body.username) : ''
         const signature: string = req.body.signature ? String(req.body.signature) : ''
 
+        // Debug validateSignature
+        logger.info('--Start Validate Signature--')
+        logger.debug('', { username: username, signature: signature })
         //check user and signature empty
         if (!username || !signature) {
             const response = this.formatErrorDataIsEmptyResponse(req.body)
+            logger.error('validateSignature: formatErrorDataIsEmptyResponse', {
+                statusCode: 400 || res.statusMessage,
+                api: req.originalUrl,
+                method: req.method,
+                ip: req.ip,
+                res: response,
+            })
             res.status(400).json(response)
             return false
         }
@@ -137,13 +148,23 @@ export default class Utils {
         const user = await this.getUserSignature(String(username))
         const validSignature: string = user ? Md5.init(String(username) + '$' + user.signature) : ''
 
+        logger.debug('validSignature', { user: user, validSignature: validSignature })
         //check user and signature valid
         if (validSignature !== String(signature) || !user) {
             const response = this.formatErrorSignatureResponse(validSignature)
+            logger.error('validateSignature: formatErrorSignatureResponse', {
+                statusCode: 400 || res.statusMessage,
+                api: req.originalUrl,
+                method: req.method,
+                ip: req.ip,
+                res: response,
+            })
             res.status(400).json(response)
             return false
         }
 
+        logger.info('--End Validate Signature--')
+        // End Debug Signature
         return true
     }
 
