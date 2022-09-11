@@ -24,8 +24,13 @@ class UserController {
     // get list users
     static listAll = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
-        logger.info('message content', { context: 'index.js', metric: 1 })
+
         if (version === 'v1') {
+            // validate signature
+            if (!(await Utils.validateSignature(req, res))) {
+                return
+            }
+
             // connect database
             if (!AppDataSource.isInitialized) {
                 await AppDataSource.initialize()
@@ -51,6 +56,14 @@ class UserController {
                     users = await userRepository.createQueryBuilder('users').select(select).getMany()
                 }
             } catch (error) {
+                logger.error('list User: Exception', {
+                    statusCode: 404 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                })
+
                 res.status(404).json({
                     message: 'Cannot get list users',
                 })
@@ -61,10 +74,29 @@ class UserController {
 
             const actionText = config.action.getAll + ' user'
             const response = Utils.formatSuccessResponse(actionText, users)
+
+            logger.debug('list User: formatSuccessResponse', {
+                statusCode: 400 || res.statusMessage,
+                api: req.originalUrl,
+                method: req.method,
+                ip: req.ip,
+                input: req.body,
+                res: response,
+            })
+
             //Send the users object
             res.status(200).json(response)
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
+
+            logger.error('list User: formatAPIVersionNotMatchResponse', {
+                statusCode: 200 || res.statusMessage,
+                api: req.originalUrl,
+                method: req.method,
+                ip: req.ip,
+                input: req.body,
+                res: response,
+            })
 
             //API Version Not Match
             res.status(200).json(response)
@@ -76,6 +108,11 @@ class UserController {
         const version = Utils.getApiVersion(req.baseUrl, res)
 
         if (version === 'v1') {
+            // validate signature
+            if (!(await Utils.validateSignature(req, res))) {
+                return
+            }
+
             //Get the ID from the url
             const id = Number(req.body.id)
 
@@ -95,14 +132,41 @@ class UserController {
 
                 if (!user) {
                     const response = Utils.formatNotExistRecordResponse(req.body)
+
+                    logger.error('user detail: formatNotExistRecordResponse', {
+                        statusCode: 200 || res.statusMessage,
+                        api: req.originalUrl,
+                        method: req.method,
+                        ip: req.ip,
+                        input: req.body,
+                        res: response,
+                    })
+
                     res.status(200).json(response)
                 } else {
                     const actionText = config.action.read + ' user'
                     const response = Utils.formatSuccessResponse(actionText, user)
 
+                    logger.debug('list User: formatSuccessResponse', {
+                        statusCode: 200 || res.statusMessage,
+                        api: req.originalUrl,
+                        method: req.method,
+                        ip: req.ip,
+                        input: req.body,
+                        res: response,
+                    })
+
                     res.status(200).json(response)
                 }
             } catch (error) {
+                logger.error('user detail: Exception', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                })
+
                 res.status(404).json({
                     message: 'Cannot get user detail',
                 })
@@ -112,6 +176,15 @@ class UserController {
             }
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
+
+            logger.error('show user: formatAPIVersionNotMatchResponse', {
+                statusCode: 200 || res.statusMessage,
+                api: req.originalUrl,
+                method: req.method,
+                ip: req.ip,
+                input: req.body,
+                res: response,
+            })
 
             //API Version Not Match
             res.status(200).json(response)
@@ -123,6 +196,11 @@ class UserController {
         const version = Utils.getApiVersion(req.baseUrl, res)
 
         if (version === 'v1') {
+            // validate signature
+            if (!(await Utils.validateSignature(req, res))) {
+                return
+            }
+
             //Get parameters from the body
             const user = new User()
             for (const key in req.body) {
@@ -135,6 +213,14 @@ class UserController {
             const errors = await validate(user)
             if (errors.length > 0) {
                 const response = Utils.formatErrorResponse(errors)
+                logger.error('create user: formatErrorResponse', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                    res: response,
+                })
                 res.status(400).json(response)
                 return
             }
@@ -154,9 +240,24 @@ class UserController {
                 const actionText = config.action.create + ' user'
 
                 const response = Utils.formatSuccessResponse(actionText, userRecord.id)
+                logger.debug('create User: formatSuccessResponse', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                    res: userRecord,
+                })
 
                 res.status(201).json(response)
             } catch (e) {
+                logger.error('create user: Exception', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                })
                 res.status(409).send('username already in use')
                 return
             } finally {
@@ -165,6 +266,15 @@ class UserController {
             }
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
+
+            logger.error('store user: formatAPIVersionNotMatchResponse', {
+                statusCode: 200 || res.statusMessage,
+                api: req.originalUrl,
+                method: req.method,
+                ip: req.ip,
+                input: req.body,
+                res: response,
+            })
 
             //API Version Not Match
             res.status(200).json(response)
@@ -176,6 +286,11 @@ class UserController {
         const version = Utils.getApiVersion(req.baseUrl, res)
 
         if (version === 'v1') {
+            // validate signature
+            if (!(await Utils.validateSignature(req, res))) {
+                return
+            }
+
             //Get the ID from body
             const id = Number(req.body.id)
 
@@ -192,6 +307,16 @@ class UserController {
 
             if (!user) {
                 const response = Utils.formatNotExistRecordResponse(req.body)
+
+                logger.error('update user: formatNotExistRecordResponse', {
+                    statusCode: 200 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                    res: response,
+                })
+
                 res.status(200).json(response)
                 return
             } else {
@@ -213,6 +338,16 @@ class UserController {
             const errors = await validate(user)
             if (errors.length > 0) {
                 const response = Utils.formatErrorResponse(errors)
+
+                logger.error('update user: formatErrorResponse', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                    res: response,
+                })
+
                 res.status(400).send(response)
                 return
             }
@@ -229,9 +364,25 @@ class UserController {
 
                 const response = Utils.formatSuccessResponse(actionText, userRecord.id)
 
+                logger.debug('update User: formatSuccessResponse', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                    res: userRecord,
+                })
                 //Update user successful
                 res.status(200).json(response)
             } catch (e) {
+                logger.error('update user: Exception', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                })
+
                 res.status(409).send('username already in use')
                 return
             } finally {
@@ -240,6 +391,15 @@ class UserController {
             }
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
+
+            logger.error('update user: formatAPIVersionNotMatchResponse', {
+                statusCode: 200 || res.statusMessage,
+                api: req.originalUrl,
+                method: req.method,
+                ip: req.ip,
+                input: req.body,
+                res: response,
+            })
 
             //API Version Not Match
             res.status(200).json(response)
@@ -251,6 +411,11 @@ class UserController {
         const version = Utils.getApiVersion(req.baseUrl, res)
 
         if (version === 'v1') {
+            // validate signature
+            if (!(await Utils.validateSignature(req, res))) {
+                return
+            }
+
             //Get the ID from the url
             const id = Number(req.body.id)
 
@@ -270,6 +435,16 @@ class UserController {
                 })
             } catch (error) {
                 const response = Utils.formatNotExistRecordResponse(req.body)
+
+                logger.error('delete user: formatNotExistRecordResponse', {
+                    statusCode: 200 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                    res: response,
+                })
+
                 res.status(200).json(response)
                 return
             } finally {
@@ -287,11 +462,29 @@ class UserController {
                 await userRepository.remove(user)
 
                 const actionText = config.action.delete + ' user'
+
+                logger.debug('delete User: formatSuccessResponse', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                    res: id,
+                })
+
                 const response = Utils.formatSuccessResponse(actionText, id)
 
                 //Remove user successful
                 res.status(200).json(response)
             } catch (e) {
+                logger.error('delete user: Exception', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                })
+
                 res.status(409).json({
                     message: 'User removed failed.',
                 })
@@ -302,7 +495,14 @@ class UserController {
             }
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
-
+            logger.error('delete user: formatAPIVersionNotMatchResponse', {
+                statusCode: 200 || res.statusMessage,
+                api: req.originalUrl,
+                method: req.method,
+                ip: req.ip,
+                input: req.body,
+                res: response,
+            })
             //API Version Not Match
             res.status(200).json(response)
         }
