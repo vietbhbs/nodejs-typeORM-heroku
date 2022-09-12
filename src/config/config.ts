@@ -5,6 +5,8 @@ export default {
     signatureTable: 'tnv_data_signature',
     topicTable: 'tnv_topic',
     tagTable: 'tnv_tag',
+    optionTable: 'tnv_option',
+    configsTable: 'tnv_config',
     pageItem: 10,
     exitCode: {
         success: 0,
