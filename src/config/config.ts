@@ -49,5 +49,6 @@ export default {
     validKey: 'valid',
     disable: 0,
     enable: 1,
-    ttlCache: 259200, //3 days
+    ttlCache: 259200, //3 days,
+    prefixCache: 'cache',
 }
