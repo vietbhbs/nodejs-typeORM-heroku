@@ -4,77 +4,88 @@ import { Option } from '../entity/Option'
 import { AppDataSource } from '../data-source'
 import config from '../config/config'
 import Utils from '../utils'
-import { Md5 } from 'md5-typescript'
+import logger from '../logger'
+
+const select = ['option.name', 'option.value', 'option.status', 'option.created_at']
 
 class OptionController {
     // get list option
     static listAll = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
-        //get username and signature
-        const username: string = req.query.username ? String(req.query.username) : ''
-        const signature: string = req.query.signature ? String(req.query.signature) : ''
         if (version === 'v1') {
-            //check user and signature empty
-            if (!username || !signature) {
-                const response = Utils.formatErrorDataIsEmptyResponse(req.query)
-                res.status(400).json(response)
+            // validate signature
+            if (!(await Utils.validateSignature(req, res))) {
                 return
-            } else {
-                // get signature & compare user signature and signature request
-                const user = await Utils.getUserSignature(String(req.query.username))
-                const validSignature: string = user ? Md5.init(String(username) + '$' + user.signature) : ''
-                //check user and signature valid
-                if (validSignature !== String(signature) || !user) {
-                    const response = Utils.formatErrorSignatureResponse(String(signature))
-                    res.status(400).json(response)
-                    return
-                } else {
-                    //connect database
-                    if (!AppDataSource.isInitialized) {
-                        await AppDataSource.initialize()
-                    }
-
-                    //Get options from database
-                    const optionRepository = AppDataSource.getRepository(Option)
-
-                    let option
-
-                    try {
-                        const select = ['option.name', 'option.value', 'option.status', 'option.created_at']
-
-                        // pagination or get all
-                        if (req.query.page) {
-                            const currentPage = Number(req.query.page)
-                            const pageItem = config.pageItem
-
-                            option = await optionRepository
-                                .createQueryBuilder('option')
-                                .select(select)
-                                .skip((currentPage - 1) * pageItem)
-                                .take(pageItem)
-                                .getMany()
-                        } else {
-                            option = await optionRepository.createQueryBuilder('option').select(select).getMany()
-                        }
-                    } catch (e) {
-                        res.status(404).json({
-                            message: 'Cannot get list options',
-                        })
-                    } finally {
-                        // disconnect database
-                        await AppDataSource.destroy()
-                    }
-                    const actionText = config.action.getAll + ' options'
-                    const response = Utils.formatSuccessResponse(actionText, option)
-
-                    //Send the options object
-                    res.status(200).json(response)
-                }
             }
-        } else {
-            res.status(400).json({
-                message: 'API version does not match.',
+
+            //connect database
+            if (!AppDataSource.isInitialized) {
+                await AppDataSource.initialize()
+            }
+
+            //Get options from database
+            const optionRepository = AppDataSource.getRepository(Option)
+
+            let option
+
+            try {
+                // pagination or get all
+                if (req.query.page) {
+                    const currentPage = Number(req.query.page)
+                    const pageItem = config.pageItem
+
+                    option = await optionRepository
+                        .createQueryBuilder('option')
+                        .select(select)
+                        .skip((currentPage - 1) * pageItem)
+                        .take(pageItem)
+                        .getMany()
+                } else {
+                    option = await optionRepository.createQueryBuilder('option').select(select).getMany()
+                }
+            } catch (error) {
+                logger.error('list Option: Exception', {
+                    statusCode: 404 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                })
+
+                res.status(404).json({
+                    message: 'Cannot get list options',
+                })
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
+            }
+            const actionText = config.action.getAll + ' options'
+            const response = Utils.formatSuccessResponse(actionText, option)
+            logger.debug('list Option: formatSuccessResponse', {
+                statusCode: 400 || res.statusMessage,
+                api: req.originalUrl,
+                method: req.method,
+                ip: req.ip,
+                input: req.body,
+                res: response,
             })
+
+            //Send the options object
+            res.status(200).json(response)
+        } else {
+            const response = Utils.formatAPIVersionNotMatchResponse()
+
+            logger.error('list Option: formatAPIVersionNotMatchResponse', {
+                statusCode: 200 || res.statusMessage,
+                api: req.originalUrl,
+                method: req.method,
+                ip: req.ip,
+                input: req.body,
+                res: response,
+            })
+
+            //API Version Not Match
+            res.status(200).json(response)
         }
     }
 
@@ -82,73 +93,88 @@ class OptionController {
 
     static newOption = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
-        const username: string = req.query.username ? String(req.query.username) : ''
-        const signature: string = req.query.signature ? String(req.query.signature) : ''
-
         if (version === 'v1') {
-            //check user and signature empty
-            if (!username || !signature) {
-                const response = Utils.formatErrorDataIsEmptyResponse({
-                    ...req.query,
-                    ...req.body,
-                })
-                res.status(400).json(response)
+            // validate signature
+            if (!(await Utils.validateSignature(req, res))) {
                 return
-            } else {
-                // get signature & compare user signature and signature request
-                const user = await Utils.getUserSignature(String(req.query.username))
-                const validSignature: string = user ? Md5.init(String(username) + '$' + user.signature) : ''
+            }
 
-                //check user and signature valid
-                if (validSignature !== String(signature) || !user) {
-                    const response = Utils.formatErrorSignatureResponse(String(signature))
-                    res.status(400).json(response)
-                    return
-                } else {
-                    const option = new Option()
-                    //Get parameters from the body
-                    for (const optionKey in req.body) {
-                        option[optionKey] = req.body[optionKey]
-                    }
-                    option['updated_pass'] = new Date()
-                    //Validate if the parameters are ok
-                    const errors = await validate(option, {
-                        validationError: { target: false },
-                    })
-                    if (errors.length > 0) {
-                        res.status(400).send(errors)
-                        return
-                    }
+            const option = new Option()
+            //Get parameters from the body
+            for (const optionKey in req.body) {
+                option[optionKey] = req.body[optionKey]
+            }
+            option['updated_pass'] = new Date()
+            //Validate if the parameters are ok
+            const errors = await validate(option, {
+                validationError: { target: false },
+            })
+            if (errors.length > 0) {
+                const response = Utils.formatErrorResponse(errors)
+                logger.error('create user: formatErrorResponse', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                    res: response,
+                })
 
-                    // connect database
-                    if (!AppDataSource.isInitialized) {
-                        await AppDataSource.initialize()
-                    }
+                res.status(400).send(errors)
+                return
+            }
 
-                    //Try to save. If fails, the option is already in use
+            // connect database
+            if (!AppDataSource.isInitialized) {
+                await AppDataSource.initialize()
+            }
 
-                    const optionRepository = AppDataSource.getRepository(Option)
-                    await AppDataSource.manager.save(option)
-                    try {
-                        await optionRepository.save(option)
-                    } catch (e) {
-                        res.status(409).json({
-                            message: 'SAVE ERROR ',
-                        })
-                        return
-                    } finally {
-                        // disconnect database
-                        await AppDataSource.destroy()
-                    }
+            //Try to save. If fails, the option is already in use
 
-                    //If all ok, send 201 response
-                    res.status(201).json({
-                        message: 'option created',
-                    })
-                }
+            const optionRepository = AppDataSource.getRepository(Option)
+            try {
+                const optionRecord = await optionRepository.save(option)
+                const actionText = config.action.create + ' user'
+
+                const response = Utils.formatSuccessResponse(actionText, optionRecord.id)
+                logger.debug('create User: formatSuccessResponse', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                    res: optionRecord,
+                })
+
+                res.status(201).json(response)
+            } catch (e) {
+                logger.error('create user: Exception', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                })
+
+                res.status(409).json({
+                    message: 'SAVE ERROR ',
+                })
+                return
+            } finally {
+                // disconnect database
+                await AppDataSource.destroy()
             }
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
+
+            logger.error('store user: formatAPIVersionNotMatchResponse', {
+                statusCode: 200 || res.statusMessage,
+                api: req.originalUrl,
+                method: req.method,
+                ip: req.ip,
+                input: req.body,
+                res: response,
+            })
 
             //API Version Not Match
             res.status(200).json(response)
@@ -180,10 +206,43 @@ class OptionController {
                     id: id,
                 })
 
-                res.status(200).json({
-                    data: options,
+                if (!options) {
+                    const response = Utils.formatNotExistRecordResponse(req.body)
+
+                    logger.error('option detail: formatNotExistRecordResponse', {
+                        statusCode: 200 || res.statusMessage,
+                        api: req.originalUrl,
+                        method: req.method,
+                        ip: req.ip,
+                        input: req.body,
+                        res: response,
+                    })
+
+                    res.status(200).json(response)
+                } else {
+                    const actionText = config.action.read + ' option'
+                    const response = Utils.formatSuccessResponse(actionText, options)
+
+                    logger.debug('list option: formatSuccessResponse', {
+                        statusCode: 200 || res.statusMessage,
+                        api: req.originalUrl,
+                        method: req.method,
+                        ip: req.ip,
+                        input: req.body,
+                        res: response,
+                    })
+
+                    res.status(200).json(response)
+                }
+            } catch (error) {
+                logger.error('user detail: Exception', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
                 })
-            } catch (e) {
+
                 res.status(404).json({
                     message: 'option not found',
                 })
@@ -193,6 +252,15 @@ class OptionController {
             }
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
+
+            logger.error('show Option: formatAPIVersionNotMatchResponse', {
+                statusCode: 200 || res.statusMessage,
+                api: req.originalUrl,
+                method: req.method,
+                ip: req.ip,
+                input: req.body,
+                res: response,
+            })
 
             //API Version Not Match
             res.status(200).json(response)
@@ -223,9 +291,19 @@ class OptionController {
             })
 
             if (!option) {
-                res.status(404).json({
-                    message: 'option not found',
+                const response = Utils.formatNotExistRecordResponse(req.body)
+
+                logger.error('update Option: formatNotExistRecordResponse', {
+                    statusCode: 200 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                    res: response,
                 })
+
+                res.status(200).json(response)
+
                 return
             }
 
@@ -240,6 +318,17 @@ class OptionController {
             //Validate the new values on model
             const errors = await validate(Option)
             if (errors.length > 0) {
+                const response = Utils.formatErrorResponse(errors)
+
+                logger.error('update user: formatErrorResponse', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                    res: response,
+                })
+
                 res.status(400).send(errors)
                 return
             }
@@ -251,11 +340,31 @@ class OptionController {
                     await AppDataSource.initialize()
                 }
 
-                await optionRepository.save(option)
-            } catch (e) {
-                res.status(409).json({
-                    message: 'option ERROR UPDATE',
+                const optionRecord = await optionRepository.save(option)
+                const actionText = config.action.update + ' user'
+
+                const response = Utils.formatSuccessResponse(actionText, optionRecord.id)
+
+                logger.debug('update Option: formatSuccessResponse', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                    res: optionRecord,
                 })
+                //Update user successful
+                res.status(200).json(response)
+            } catch (e) {
+                logger.error('update user: Exception', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                })
+
+                res.status(409).send('username already in use')
                 return
             } finally {
                 // disconnect database
@@ -299,10 +408,19 @@ class OptionController {
                         id: id,
                     },
                 })
-            } catch (e) {
-                res.status(404).json({
-                    message: 'option not found',
+            } catch (error) {
+                const response = Utils.formatNotExistRecordResponse(req.body)
+
+                logger.error('delete option: formatNotExistRecordResponse', {
+                    statusCode: 200 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                    res: response,
                 })
+
+                res.status(200).json(response)
                 return
             } finally {
                 // disconnect database
@@ -317,26 +435,54 @@ class OptionController {
                 }
 
                 await optionRepository.remove(option)
+                const actionText = config.action.delete + ' user'
+
+                logger.debug('delete Option: formatSuccessResponse', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                    res: id,
+                })
+
+                const response = Utils.formatSuccessResponse(actionText, id)
+
+                //Remove user successful
+                res.status(200).json(response)
             } catch (e) {
+                logger.error('delete user: Exception', {
+                    statusCode: 400 || res.statusMessage,
+                    api: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip,
+                    input: req.body,
+                })
+
                 res.status(409).json({
-                    message: 'option removed failed.',
+                    message: 'User removed failed.',
                 })
                 return
             } finally {
                 // disconnect database
                 await AppDataSource.destroy()
             }
-
-            //After all send a 204 (no content, but accepted) response
-            res.status(200).json({
-                message: 'option deleted',
-            })
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
+
+            logger.error('delete user: formatAPIVersionNotMatchResponse', {
+                statusCode: 200 || res.statusMessage,
+                api: req.originalUrl,
+                method: req.method,
+                ip: req.ip,
+                input: req.body,
+                res: response,
+            })
 
             //API Version Not Match
             res.status(200).json(response)
         }
     }
 }
+
 export default OptionController
