@@ -1,6 +1,6 @@
 export default {
     jwtSecret: '@QEGTUI',
-    userTable: 'tnv_user',
+    userTable: 'tnv_beetsoft_user',
     categoryTable: 'tnv_category',
     signatureTable: 'tnv_data_signature',
     topicTable: 'tnv_topic',

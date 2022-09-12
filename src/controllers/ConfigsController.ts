@@ -12,7 +12,6 @@ class ConfigsController {
     // get list configs
     static listAll = async (req: Request, res: Response) => {
         const version = Utils.getApiVersion(req.baseUrl, res)
-        //get username and signature
         if (version === 'v1') {
             // validate signature
             if (!(await Utils.validateSignature(req, res))) {
@@ -62,7 +61,7 @@ class ConfigsController {
             }
             const actionText = config.action.getAll + ' configs'
             const response = Utils.formatSuccessResponse(actionText, configs)
-            logger.debug('list User: formatSuccessResponse', {
+            logger.debug('list config: formatSuccessResponse', {
                 statusCode: 400 || res.statusMessage,
                 api: req.originalUrl,
                 method: req.method,
@@ -76,7 +75,7 @@ class ConfigsController {
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
 
-            logger.error('list User: formatAPIVersionNotMatchResponse', {
+            logger.error('list config: formatAPIVersionNotMatchResponse', {
                 statusCode: 200 || res.statusMessage,
                 api: req.originalUrl,
                 method: req.method,
@@ -135,22 +134,22 @@ class ConfigsController {
             const configsRepository = AppDataSource.getRepository(Configs)
             await AppDataSource.manager.save(configs)
             try {
-                const userRecord = await configsRepository.save(configs)
+                const configRecord = await configsRepository.save(configs)
                 const actionText = config.action.create + ' config'
 
-                const response = Utils.formatSuccessResponse(actionText, userRecord.id)
+                const response = Utils.formatSuccessResponse(actionText, configRecord.id)
                 logger.debug('create config: formatSuccessResponse', {
                     statusCode: 400 || res.statusMessage,
                     api: req.originalUrl,
                     method: req.method,
                     ip: req.ip,
                     input: req.body,
-                    res: userRecord,
+                    res: configRecord,
                 })
 
                 res.status(201).json(response)
             } catch (e) {
-                logger.error('create user: Exception', {
+                logger.error('create config: Exception', {
                     statusCode: 400 || res.statusMessage,
                     api: req.originalUrl,
                     method: req.method,
@@ -174,7 +173,7 @@ class ConfigsController {
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
 
-            logger.error('store user: formatAPIVersionNotMatchResponse', {
+            logger.error('store config: formatAPIVersionNotMatchResponse', {
                 statusCode: 200 || res.statusMessage,
                 api: req.originalUrl,
                 method: req.method,
@@ -216,7 +215,7 @@ class ConfigsController {
                 if (!configs) {
                     const response = Utils.formatNotExistRecordResponse(req.body)
 
-                    logger.error('user detail: formatNotExistRecordResponse', {
+                    logger.error('config detail: formatNotExistRecordResponse', {
                         statusCode: 200 || res.statusMessage,
                         api: req.originalUrl,
                         method: req.method,
@@ -227,10 +226,10 @@ class ConfigsController {
 
                     res.status(200).json(response)
                 } else {
-                    const actionText = config.action.read + ' user'
+                    const actionText = config.action.read + ' config'
                     const response = Utils.formatSuccessResponse(actionText, configs)
 
-                    logger.debug('list User: formatSuccessResponse', {
+                    logger.debug('list config: formatSuccessResponse', {
                         statusCode: 200 || res.statusMessage,
                         api: req.originalUrl,
                         method: req.method,
@@ -259,7 +258,7 @@ class ConfigsController {
             }
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
-            logger.error('show user: formatAPIVersionNotMatchResponse', {
+            logger.error('show config: formatAPIVersionNotMatchResponse', {
                 statusCode: 200 || res.statusMessage,
                 api: req.originalUrl,
                 method: req.method,
@@ -325,7 +324,7 @@ class ConfigsController {
             if (errors.length > 0) {
                 const response = Utils.formatErrorResponse(errors)
 
-                logger.error('update user: formatErrorResponse', {
+                logger.error('update config: formatErrorResponse', {
                     statusCode: 400 || res.statusMessage,
                     api: req.originalUrl,
                     method: req.method,
@@ -346,11 +345,11 @@ class ConfigsController {
                 }
 
                 const configRecord = await configsRepository.save(configs)
-                const actionText = config.action.update + ' user'
+                const actionText = config.action.update + ' config'
 
                 const response = Utils.formatSuccessResponse(actionText, configRecord.id)
 
-                logger.debug('update User: formatSuccessResponse', {
+                logger.debug('update config: formatSuccessResponse', {
                     statusCode: 400 || res.statusMessage,
                     api: req.originalUrl,
                     method: req.method,
@@ -358,7 +357,7 @@ class ConfigsController {
                     input: req.body,
                     res: configRecord,
                 })
-                //Update user successful
+                //Update config successful
                 res.status(200).json(response)
             } catch (e) {
                 logger.error('update config: Exception', {
@@ -382,7 +381,7 @@ class ConfigsController {
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
 
-            logger.error('update user: formatAPIVersionNotMatchResponse', {
+            logger.error('update config: formatAPIVersionNotMatchResponse', {
                 statusCode: 200 || res.statusMessage,
                 api: req.originalUrl,
                 method: req.method,
@@ -463,7 +462,7 @@ class ConfigsController {
 
                 const response = Utils.formatSuccessResponse(actionText, id)
 
-                //Remove user successful
+                //Remove config successful
                 res.status(200).json(response)
             } catch (e) {
                 logger.error('delete config: Exception', {
@@ -490,7 +489,7 @@ class ConfigsController {
             })
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
-            logger.error('delete user: formatAPIVersionNotMatchResponse', {
+            logger.error('delete config: formatAPIVersionNotMatchResponse', {
                 statusCode: 200 || res.statusMessage,
                 api: req.originalUrl,
                 method: req.method,

@@ -40,7 +40,7 @@ class TagController {
             if (!AppDataSource.isInitialized) {
                 await AppDataSource.initialize()
             }
-            //Get users from database
+            //Get usertags from database
 
             //Get tags from database
             const tagRepository = AppDataSource.getRepository(Tag)
@@ -63,7 +63,7 @@ class TagController {
                     tag = await tagRepository.createQueryBuilder('tag').select(select).getMany()
                 }
             } catch (error) {
-                logger.error('list User: Exception', {
+                logger.error('list usertag: Exception', {
                     statusCode: 404 || res.statusMessage,
                     api: req.originalUrl,
                     method: req.method,
@@ -81,7 +81,7 @@ class TagController {
             const actionText = config.action.getAll + ' tags'
             const response = Utils.formatSuccessResponse(actionText, tag)
 
-            logger.debug('list User: formatSuccessResponse', {
+            logger.debug('list usertag: formatSuccessResponse', {
                 statusCode: 400 || res.statusMessage,
                 api: req.originalUrl,
                 method: req.method,
@@ -95,7 +95,7 @@ class TagController {
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
 
-            logger.error('list User: formatAPIVersionNotMatchResponse', {
+            logger.error('list usertag: formatAPIVersionNotMatchResponse', {
                 statusCode: 200 || res.statusMessage,
                 api: req.originalUrl,
                 method: req.method,
@@ -156,7 +156,7 @@ class TagController {
             const tagRepository = AppDataSource.getRepository(Tag)
             try {
                 const tagRecord = await tagRepository.save(tag)
-                const actionText = config.action.create + ' user'
+                const actionText = config.action.create + ' usertag'
 
                 const response = Utils.formatSuccessResponse(actionText, tagRecord.id)
                 logger.debug('create tag: formatSuccessResponse', {
@@ -193,7 +193,7 @@ class TagController {
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
 
-            logger.error('store user: formatAPIVersionNotMatchResponse', {
+            logger.error('store usertag: formatAPIVersionNotMatchResponse', {
                 statusCode: 200 || res.statusMessage,
                 api: req.originalUrl,
                 method: req.method,
@@ -249,7 +249,7 @@ class TagController {
                     const actionText = config.action.read + ' tag'
                     const response = Utils.formatSuccessResponse(actionText, tags)
 
-                    logger.debug('list User: formatSuccessResponse', {
+                    logger.debug('list usertag: formatSuccessResponse', {
                         statusCode: 200 || res.statusMessage,
                         api: req.originalUrl,
                         method: req.method,
@@ -365,7 +365,7 @@ class TagController {
                 }
 
                 const tagRecord = await tagRepository.save(tag)
-                const actionText = config.action.update + ' user'
+                const actionText = config.action.update + ' usertag'
 
                 const response = Utils.formatSuccessResponse(actionText, tagRecord.id)
 
@@ -377,10 +377,10 @@ class TagController {
                     input: req.body,
                     res: tagRecord,
                 })
-                //Update user successful
+                //Update usertag successful
                 res.status(200).json(response)
             } catch (e) {
-                logger.error('update user: Exception', {
+                logger.error('update usertag: Exception', {
                     statusCode: 400 || res.statusMessage,
                     api: req.originalUrl,
                     method: req.method,
@@ -476,7 +476,7 @@ class TagController {
 
                 const response = Utils.formatSuccessResponse(actionText, id)
 
-                //Remove user successful
+                //Remove usertag successful
                 res.status(200).json(response)
             } catch (e) {
                 logger.error('delete Tag: Exception', {
@@ -498,7 +498,7 @@ class TagController {
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
 
-            logger.error('delete user: formatAPIVersionNotMatchResponse', {
+            logger.error('delete tag: formatAPIVersionNotMatchResponse', {
                 statusCode: 200 || res.statusMessage,
                 api: req.originalUrl,
                 method: req.method,

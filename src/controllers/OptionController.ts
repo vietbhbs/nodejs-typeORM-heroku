@@ -111,7 +111,7 @@ class OptionController {
             })
             if (errors.length > 0) {
                 const response = Utils.formatErrorResponse(errors)
-                logger.error('create user: formatErrorResponse', {
+                logger.error('create option: formatErrorResponse', {
                     statusCode: 400 || res.statusMessage,
                     api: req.originalUrl,
                     method: req.method,
@@ -134,10 +134,10 @@ class OptionController {
             const optionRepository = AppDataSource.getRepository(Option)
             try {
                 const optionRecord = await optionRepository.save(option)
-                const actionText = config.action.create + ' user'
+                const actionText = config.action.create + ' option'
 
                 const response = Utils.formatSuccessResponse(actionText, optionRecord.id)
-                logger.debug('create User: formatSuccessResponse', {
+                logger.debug('create option: formatSuccessResponse', {
                     statusCode: 400 || res.statusMessage,
                     api: req.originalUrl,
                     method: req.method,
@@ -148,7 +148,7 @@ class OptionController {
 
                 res.status(201).json(response)
             } catch (e) {
-                logger.error('create user: Exception', {
+                logger.error('create option: Exception', {
                     statusCode: 400 || res.statusMessage,
                     api: req.originalUrl,
                     method: req.method,
@@ -167,7 +167,7 @@ class OptionController {
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
 
-            logger.error('store user: formatAPIVersionNotMatchResponse', {
+            logger.error('store option: formatAPIVersionNotMatchResponse', {
                 statusCode: 200 || res.statusMessage,
                 api: req.originalUrl,
                 method: req.method,
@@ -235,7 +235,7 @@ class OptionController {
                     res.status(200).json(response)
                 }
             } catch (error) {
-                logger.error('user detail: Exception', {
+                logger.error('option detail: Exception', {
                     statusCode: 400 || res.statusMessage,
                     api: req.originalUrl,
                     method: req.method,
@@ -320,7 +320,7 @@ class OptionController {
             if (errors.length > 0) {
                 const response = Utils.formatErrorResponse(errors)
 
-                logger.error('update user: formatErrorResponse', {
+                logger.error('update option: formatErrorResponse', {
                     statusCode: 400 || res.statusMessage,
                     api: req.originalUrl,
                     method: req.method,
@@ -341,7 +341,7 @@ class OptionController {
                 }
 
                 const optionRecord = await optionRepository.save(option)
-                const actionText = config.action.update + ' user'
+                const actionText = config.action.update + ' option'
 
                 const response = Utils.formatSuccessResponse(actionText, optionRecord.id)
 
@@ -353,10 +353,10 @@ class OptionController {
                     input: req.body,
                     res: optionRecord,
                 })
-                //Update user successful
+                //Update option successful
                 res.status(200).json(response)
             } catch (e) {
-                logger.error('update user: Exception', {
+                logger.error('update option: Exception', {
                     statusCode: 400 || res.statusMessage,
                     api: req.originalUrl,
                     method: req.method,
@@ -364,7 +364,7 @@ class OptionController {
                     input: req.body,
                 })
 
-                res.status(409).send('username already in use')
+                res.status(409).send('option already in use')
                 return
             } finally {
                 // disconnect database
@@ -435,7 +435,7 @@ class OptionController {
                 }
 
                 await optionRepository.remove(option)
-                const actionText = config.action.delete + ' user'
+                const actionText = config.action.delete + ' option'
 
                 logger.debug('delete Option: formatSuccessResponse', {
                     statusCode: 400 || res.statusMessage,
@@ -448,10 +448,10 @@ class OptionController {
 
                 const response = Utils.formatSuccessResponse(actionText, id)
 
-                //Remove user successful
+                //Remove option successful
                 res.status(200).json(response)
             } catch (e) {
-                logger.error('delete user: Exception', {
+                logger.error('delete option: Exception', {
                     statusCode: 400 || res.statusMessage,
                     api: req.originalUrl,
                     method: req.method,
@@ -460,7 +460,7 @@ class OptionController {
                 })
 
                 res.status(409).json({
-                    message: 'User removed failed.',
+                    message: 'option removed failed.',
                 })
                 return
             } finally {
@@ -470,7 +470,7 @@ class OptionController {
         } else {
             const response = Utils.formatAPIVersionNotMatchResponse()
 
-            logger.error('delete user: formatAPIVersionNotMatchResponse', {
+            logger.error('delete option: formatAPIVersionNotMatchResponse', {
                 statusCode: 200 || res.statusMessage,
                 api: req.originalUrl,
                 method: req.method,
