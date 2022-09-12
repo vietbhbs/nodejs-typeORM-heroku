@@ -12,6 +12,13 @@ export default class Utils {
      * @param baseUrl
      * @param res
      */
+
+    private prefixCache: string
+
+    constructor() {
+        this.prefixCache = config.prefixCache
+    }
+
     static getApiVersion(baseUrl: string, res: Response): string | boolean {
         const splitUrl = baseUrl.split('/')
         const version = splitUrl[2]
@@ -126,7 +133,6 @@ export default class Utils {
         //get username and signature
         const username: string = req.body.username ? String(req.body.username) : ''
         const signature: string = req.body.signature ? String(req.body.signature) : ''
-
         // Debug validateSignature
         logger.info('--Start Validate Signature--')
         logger.debug('', { username: username, signature: signature })
@@ -186,7 +192,8 @@ export default class Utils {
      * @param nickname
      */
     static async getUserSignature(nickname) {
-        const cacheKey: string = this.constructor.name + Md5.init('data_signature' + nickname)
+        const cacheKey: string =
+            this.prototype.prefixCache + this.getUserSignature.name + Md5.init('data_signature' + nickname)
         const nodeCache = new NodeCache()
         let result
 
