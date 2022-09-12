@@ -1,51 +1,33 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm'
-
-import { IsIn, Length, IsNotEmpty } from 'class-validator'
+import { Length, IsNotEmpty, IsIn } from 'class-validator'
 import config from '../config/config'
 
-@Entity(config.topicTable)
-export class Topic {
+@Entity(config.tagTable)
+export class Tag {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column({
-        type: 'varchar',
-        length: 36,
-    })
+    @Column('varchar', { length: 255 })
     @IsNotEmpty()
+    @Length(4, 50)
     uuid: string
 
-    @Column({
-        type: 'tinyint',
-        precision: 1,
-    })
-    @IsNotEmpty()
+    @Column(['varchar', { length: 50 }, { default: 1 }])
     @IsIn([0, 1])
-    status: number
+    status: string
 
-    @Column({
-        name: 'is_hot',
-        type: 'tinyint',
-        precision: 1,
-    })
+    @Column({ default: 1 })
     @IsNotEmpty()
-    @IsIn([0, 1])
-    isHost: number
+    is_hot: number
 
-    @Column({
-        type: 'varchar',
-        length: 256,
-    })
+    @Column()
     @IsNotEmpty()
     @Length(5, 100)
     name: string
 
-    @Column({
-        type: 'varchar',
-        length: 256,
-    })
+    @Column('varchar', { length: 100 })
     @IsNotEmpty()
-    @Length(1, 50)
+    @Length(4, 50)
     slugs: string
 
     @Column({
@@ -55,41 +37,16 @@ export class Topic {
     })
     language: string
 
-    @Column({
-        type: 'varchar',
-        length: 256,
-    })
-    @IsNotEmpty()
-    @Length(5, 256)
+    @Column()
     title: string
 
-    @Column({
-        type: 'varchar',
-        length: 256,
-    })
-    @IsNotEmpty()
-    @Length(5, 256)
+    @Column()
     description: string
 
-    @Column({
-        type: 'varchar',
-        length: 256,
-    })
-    @IsNotEmpty()
-    @Length(5, 256)
+    @Column()
     keywords: string
 
-    @Column({
-        nullable: true,
-        type: 'text',
-    })
-    content: string
-
-    @Column({
-        type: 'text',
-        comment: 'Json String',
-    })
-    @IsNotEmpty()
+    @Column()
     photo: string
 
     @Column({
@@ -105,7 +62,7 @@ export class Topic {
         precision: 10,
         default: 0,
     })
-    viewTotal: number
+    view_total: number
 
     @Column({
         type: 'int',
@@ -113,7 +70,7 @@ export class Topic {
         precision: 10,
         default: 0,
     })
-    viewDay: number
+    view_day: number
 
     @Column({
         type: 'int',
@@ -121,7 +78,7 @@ export class Topic {
         precision: 10,
         default: 0,
     })
-    viewWeek: number
+    view_week: number
 
     @Column({
         type: 'int',
@@ -129,7 +86,7 @@ export class Topic {
         precision: 10,
         default: 0,
     })
-    viewMonth: number
+    view_month: number
 
     @Column({
         type: 'int',
@@ -137,7 +94,7 @@ export class Topic {
         precision: 10,
         default: 0,
     })
-    viewYear: number
+    view_year: number
 
     @CreateDateColumn({
         type: 'datetime',
