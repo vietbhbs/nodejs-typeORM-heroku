@@ -9,11 +9,11 @@ import { Topic } from './entity/Topic'
 
 export const AppDataSource = new DataSource({
     type: 'mysql',
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT),
-    username: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_NAME,
+    host: 'bvsagmcivbwjagvahkbi-mysql.services.clever-cloud.com',
+    port: 3306,
+    username: 'uzlizjr0drsgriis',
+    password: 's7nrasl2oSK7j44DMQqu',
+    database: 'bvsagmcivbwjagvahkbi',
     synchronize: true,
     logging: false,
     entities: [User, Category, Topic, Signature, Tag],
